@@ -1,0 +1,1 @@
+require 'szmgmt/templates/entities'
