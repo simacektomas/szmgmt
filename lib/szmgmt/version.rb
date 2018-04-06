@@ -1,3 +1,3 @@
-module Szmgmt
-  VERSION = "0.1.0"
+module SZMGMT
+  VERSION = '0.1.0'
 end
