@@ -1,3 +1,6 @@
+require 'json'
+require 'json-schema'
+
 require 'szmgmt/exceptions'
 require 'szmgmt/templates'
 
