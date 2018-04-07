@@ -1,11 +1,13 @@
 module SZMGMT
   module Templates
-    class Template
-      attr_accessor :data, :path
+    module Entities
+      class Template
+        attr_accessor :data, :path
 
-      def initialize(data, path)
-        @data = data
-        @path = path
+        def initialize(data, path)
+          @data = data
+          @path = path
+        end
       end
     end
   end
