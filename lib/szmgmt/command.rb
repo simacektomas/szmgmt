@@ -5,13 +5,20 @@ module SZMGMT
 
     def initialize(command)
       @command = command
-      @stdout, @stderr = ''
-      @exit_code = nil
+      @stdout = ''
+      @stderr = ''
+      @exit_code = false
       @executed = false
+      @sucess = true
+      @error_handler = lambda { |command, stdout, stderr, exit_code|
+        raise Exceptions::CommandFailure.new(command,exit_code) if exit_code > 0
+      }
     end
 
     def exec
-      @stdout, @stderr, @exit_code  = Open3.capture3(@command)
+      @stdout, @stderr, exit_code  = Open3.capture3(@command)
+      @exit_code = exit_code.exitstatus
+      @error_handler.call(@command ,@stdout, @stderr, @exit_code)
       @executed = true
       self
     end
@@ -37,6 +44,10 @@ module SZMGMT
       ssh.loop
       @executed = true
       self
+    end
+
+    def register_error_handler(handler)
+
     end
   end
 end

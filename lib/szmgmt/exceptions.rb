@@ -1,3 +1,5 @@
-require 'szmgmt/exceptions/path_invalid_error'
+require 'szmgmt/exceptions/command_failure'
+require 'szmgmt/exceptions/szone_not_configured_error'
 require 'szmgmt/exceptions/template_syntax_error'
 require 'szmgmt/exceptions/template_invalid_error'
+require 'szmgmt/exceptions/path_invalid_error'
