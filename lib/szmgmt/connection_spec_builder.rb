@@ -4,13 +4,12 @@ module SZMGMT
 
     DEFAULT_VALUES = {
         :user => ENV['USER'],
-        :auth_methods => [ Net::SSH::Authentication::Methods::Hostbased,
-                           Net::SSH::Authentication::Methods::Publickey ],
-        :keys => [ '~/.ssh/id_rsa' ]
+        :keys => [ '~/.ssh/id_rsa' ],
+        :non_interactive => true
     }
 
     def initialize(hostname)
-      @specification ||= { :hostname => hostname }
+      @specification ||= { :host_name => hostname }
       @specification.merge!(DEFAULT_VALUES)
     end
 
@@ -18,12 +17,12 @@ module SZMGMT
       @specification[:user] = user
     end
 
-    def auth_methods=(methods)
-      @specification[:auth_methods] = methods
-    end
-
     def keys=(keys)
       @specification[:keys] = keys
+    end
+
+    def non_interactive=(value)
+      @specification[:non_interactive] = value
     end
   end
 end
