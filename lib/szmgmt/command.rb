@@ -42,12 +42,13 @@ module SZMGMT
         end
       end
       ssh.loop
+      @error_handler.call(@command ,@stdout, @stderr, @exit_code)
       @executed = true
       self
     end
 
     def register_error_handler(handler)
-
+      @error_handler = handler
     end
   end
 end
