@@ -2,7 +2,7 @@ module SZMGMT
   class Configuration < Struct.new(:root_dir, :schema_dir)
     DEFAULT_OPTIONS = {
         root_dir: '/etc/szmgmt/',
-        schema_dir: '/etc/szmgmt/schema',
+        schema_dir: '/etc/szmgmt/schema'
     }
 
     def initialize(options = {})

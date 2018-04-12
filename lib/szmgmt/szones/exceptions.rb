@@ -1,0 +1,1 @@
+require 'szmgmt/szones/exceptions/command_failure_error'
