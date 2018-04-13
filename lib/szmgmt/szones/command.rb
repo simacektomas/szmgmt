@@ -4,7 +4,7 @@ module SZMGMT
 
       attr_reader :command, :stdout, :stderr, :exit_code, :executed
 
-      def initialize(command)
+      def initialize(command, error_handler = nil)
         @command = command
         @stdout = ''
         @stderr = ''
@@ -12,8 +12,9 @@ module SZMGMT
         @executed = false
         @sucess = true
         @error_handler = lambda { |command, stdout, stderr, exit_code|
-          raise Exceptions::CommandFailure.new(command,exit_code) if exit_code > 0
+          raise Exceptions::CommandFailureError.new(command, exit_code) if exit_code > 0
         }
+        @error_handler = error_handler if error_handler
       end
 
       def exec
