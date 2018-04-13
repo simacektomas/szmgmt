@@ -4,23 +4,23 @@ module SZMGMT
 
       attr_reader :command, :stdout, :stderr, :exit_code, :executed
 
-      def initialize(command, error_handler = nil)
+      def initialize(command, *error_handlers)
         @command = command
         @stdout = ''
         @stderr = ''
         @exit_code = false
         @executed = false
         @sucess = true
-        @error_handler = lambda { |command, stdout, stderr, exit_code|
-          raise Exceptions::CommandFailureError.new(command, exit_code) if exit_code > 0
-        }
-        @error_handler = error_handler if error_handler
+        @error_handlers = [SZONESErrorHandlers.basic_error_handler]
+        @error_handlers = error_handlers unless error_handlers.empty?
       end
 
       def exec
         @stdout, @stderr, exit_code  = Open3.capture3(@command)
         @exit_code = exit_code.exitstatus
-        @error_handler.call(@command ,@stdout, @stderr, @exit_code)
+        @error_handlers.each do |handler|
+          handler.call(@command ,@stdout, @stderr, @exit_code)
+        end
         @executed = true
         self
       end
@@ -44,7 +44,9 @@ module SZMGMT
           end
         end
         ssh.loop
-        @error_handler.call(@command ,@stdout, @stderr, @exit_code)
+        @error_handlers.each do |handler|
+          handler.call(@command ,@stdout, @stderr, @exit_code)
+        end
         @executed = true
         self
       end
