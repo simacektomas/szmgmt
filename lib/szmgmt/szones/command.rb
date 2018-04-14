@@ -16,6 +16,7 @@ module SZMGMT
       end
 
       def exec
+        SZMGMT.logger.debug("Command - #{command} executed.")
         @stdout, @stderr, exit_code  = Open3.capture3(@command)
         @exit_code = exit_code.exitstatus
         @error_handlers.each do |handler|
@@ -26,6 +27,7 @@ module SZMGMT
       end
 
       def exec_ssh(ssh)
+        SZMGMT.logger.debug("Command - #{command} remotely executed.")
         ssh.open_channel do |channel|
           channel.exec(@command) do |ch, success|
             raise StandardError unless success

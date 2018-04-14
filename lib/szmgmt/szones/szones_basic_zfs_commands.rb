@@ -1,6 +1,6 @@
 module SZMGMT
   module SZONES
-    class SZONESBasicZFSRoutines
+    class SZONESBasicZFSCommands
       # If no compression type is recognized from file ending this
       # default compression is used
       @@default_compression = 'gzip'
@@ -36,10 +36,10 @@ module SZMGMT
       # given dataset should be deleted as well. Last option force specify
       # if the dataset should be forcibly umounted.
       def self.destroy_dataset(dataset_name, opts = {})
-        recursively = opts[:recursively] || false
+        recursive = opts[:recursive] || false
         dependants = opts[:dependants] || false
         force = opts[:force] || false
-        Command.new("/usr/sbin/zfs destroy #{"-r" if recursively} #{"-R" if dependants} #{"-f" if force} #{dataset_name}",
+        Command.new("/usr/sbin/zfs destroy #{"-r" if recursive} #{"-R" if dependants} #{"-f" if force} #{dataset_name}",
                     SZONESErrorHandlers.zfs_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end
@@ -58,10 +58,10 @@ module SZMGMT
       # that deletes all snapshots with this name in hierarchy. Last option defer
       # specify if the act of destroying snapshots should be defer.
       def self.destroy_snapshot(snapshot_name, opts = {})
-        recursively = opts[:recursively] || false
+        recursive = opts[:recursive] || false
         dependants = opts[:dependants] || false
         defer = opts[:defer] || false
-        Command.new("/usr/sbin/zfs destroy #{"-r" if recursively} #{"-R" if dependants} #{"-d" if defer} #{snapshot_name}",
+        Command.new("/usr/sbin/zfs destroy #{"-r" if recursive} #{"-R" if dependants} #{"-d" if defer} #{snapshot_name}",
                     SZONESErrorHandlers.zfs_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end

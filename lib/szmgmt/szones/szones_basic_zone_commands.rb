@@ -1,6 +1,6 @@
 module SZMGMT
   module SZONES
-    class SZONESBasicZoneRoutines
+    class SZONESBasicZoneCommands
       # ZONECFG ROUTINES
       def self.configure_zone_from_file(zone_name, path_to_command_file, opts = {})
         live_config = opts[:live_config] ? '-r' : ''
@@ -11,7 +11,27 @@ module SZMGMT
 
       def self.configure_zone(zone_name, opts = {})
         live_config = opts[:live_config] ? '-r' : ''
-        Command.new("/usr/sbin/zonecfg -z #{zone_name} #{live_config}",
+        commands = opts[:commands] || []
+        if commands.is_a? Array
+          command = "'#{commands.join(";")}'"
+        end
+        Command.new("/usr/sbin/zonecfg -z #{zone_name} #{live_config} #{command}",
+                    SZONESErrorHandlers.zonecfg_error_handler,
+                    SZONESErrorHandlers.basic_error_handler)
+      end
+      # Takes zone configuration and export it to file on
+      # remote host. You can specify path where the file should
+      # be stored
+      def self.export_zone_to_file(zone_name, path_to_file)
+        Command.new("/usr/sbin/zonecfg -z #{zone_name} export > #{path_to_file}",
+                    SZONESErrorHandlers.zonecfg_error_handler,
+                    SZONESErrorHandlers.basic_error_handler)
+      end
+      # Takes zone configuration and export it to file on
+      # remote host. You can specify remote path where the file should
+      # be stored and the hostname.
+      def self.export_zone_to_remote_file(zone_name, remote_path_to_file, host_name)
+        Command.new("/usr/sbin/zonecfg -z #{zone_name} export | ssh #{host_name} \"cat > #{remote_path_to_file}\"",
                     SZONESErrorHandlers.zonecfg_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end
