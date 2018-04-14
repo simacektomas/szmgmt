@@ -44,6 +44,7 @@ module SZMGMT
             end
           end
         end
+        SZMGMT.logger.info("CLEANUP: Cleanup finished.")
       end
     end
   end

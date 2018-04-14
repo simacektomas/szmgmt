@@ -1,9 +1,9 @@
 module SZMGMT
   module SZONES
     module Exceptions
-      class NoSuchZoneError < SZONESError
+      class BashNoSuchFileorDirError < SZONESError
         def initialize(command, stderr)
-          SZMGMT.logger.error("NoSuchZoneError - No such zone exists (#{command}).")
+          SZMGMT.logger.error("BashNoSuchFileorDirError - No such file or directory '#{command}'.")
           SZMGMT.logger.error("----> (stderr) #{stderr}")
           super(stderr)
         end

@@ -1,9 +1,9 @@
 module SZMGMT
   module SZONES
     module Exceptions
-      class NoSuchZoneError < SZONESError
+      class CommandSyntaxError < SZONESError
         def initialize(command, stderr)
-          SZMGMT.logger.error("NoSuchZoneError - No such zone exists (#{command}).")
+          SZMGMT.logger.error("CommandSyntaxError - Invalid command syntax for command '#{command}'.")
           SZMGMT.logger.error("----> (stderr) #{stderr}")
           super(stderr)
         end

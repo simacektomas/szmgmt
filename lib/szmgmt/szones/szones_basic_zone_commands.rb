@@ -127,6 +127,23 @@ module SZMGMT
                     SZONESErrorHandlers.zoneadm_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end
+
+      # Create unified archive from zones specified. Zones can be multiple zones
+      # but only in case that option recovery is not specified. Exclude option
+      # exclude BE for kernel zones and recovery option add all necessary manifests etc.
+      # to recover zone from archive.
+      def self.create_unified_archive(zone_names, path_to_archive,opts = {})
+        exclude = opts[:exclude] || false
+        recovery = opts[:recovery] || false
+        if zone_names.is_a? Array
+          zones = zone_names.join(',')
+        else
+          zones = zone_names
+        end
+        Command.new("/usr/sbin/archiveadm create -z #{zones} #{"-r" if recovery} #{"-e" if exclude} #{path_to_archive}",
+                    SZONESErrorHandlers.archiveadm_error_handler,
+                    SZONESErrorHandlers.basic_error_handler)
+      end
     end
   end
 end
