@@ -1,6 +1,20 @@
 module SZMGMT
   module SZONES
     module SZONESErrorHandlers
+
+      def self.zoneadm_error_handler
+        lambda { |command, stdout, stderr, exit_code|
+         if exit_code > 0
+          if /No such zone configured/.match(stderr)
+            raise Exceptions::NoSuchZoneError.new(command, stderr)
+          elsif /cannot manage a zone which is in state/.match(stderr) ||
+                /must be installed before/.match(stderr)
+            raise Exceptions::InvalidZoneStateError.new(command, stderr)
+          end
+         end
+        }
+      end
+
       def self.zonecfg_error_handler
         lambda { |command, stdout, stderr, exit_code|
           if exit_code > 0
@@ -35,7 +49,7 @@ module SZMGMT
 
       def self.basic_error_handler
         lambda { |command, stdout, stderr, exit_code|
-          raise Exceptions::CommandFailureError.new(command, exit_code) if exit_code > 0
+          raise Exceptions::CommandFailureError.new(command, stderr, exit_code) if exit_code > 0
         }
       end
     end

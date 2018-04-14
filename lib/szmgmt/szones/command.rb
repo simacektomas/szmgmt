@@ -52,7 +52,7 @@ module SZMGMT
       end
 
       def register_error_handler(handler)
-        @error_handler = handler
+        @error_handlers << handler
       end
     end
   end
