@@ -36,7 +36,7 @@ module SZMGMT
         base_name         = "#{zone_name}_migration#{current_time}"
         snapshot_name     = base_name
         zone_config_path  = File.join(tmp_dir, "#{base_name}.zonecfg")
-        id                = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) -  Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (DIRECTLY) ...")
         # EXECUTION PHASE
         begin
@@ -133,7 +133,7 @@ module SZMGMT
         base_name         = "#{zone_name}_migration#{current_time}"
         snapshot_name     = base_name
         zone_config_path  = File.join(tmp_dir, "#{base_name}.zonecfg")
-        id                = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) -  Migration (#{remote_host_spec[:host_name]} -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (DIRECTLY) ...")
         # EXECUTION PHASE
         begin
@@ -233,7 +233,7 @@ module SZMGMT
         snapshot_name     = base_name
         zone_config_path  = File.join(tmp_dir, "#{base_name}.zonecfg")
         archive_path      = File.join(tmp_dir, "#{base_name}.zfs.gz")
-        id = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) -  Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (ZFS) ...")
         # EXECUTION PHASE
         begin
@@ -327,7 +327,7 @@ module SZMGMT
         snapshot_name     = base_name
         zone_config_path  = File.join(tmp_dir, "#{base_name}.zonecfg")
         archive_path      = File.join(tmp_dir, "#{base_name}.zfs.gz")
-        id = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) - Migration (#{remote_host_spec[:host_name]}->#{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (ZFS)...")
         # EXECUTION PHASE
         begin
@@ -418,7 +418,7 @@ module SZMGMT
         current_time      = Time.now.to_i
         base_name         = "#{zone_name}_migration#{current_time}"
         path_to_archive   = File.join(tmp_dir, "#{base_name}.uar")
-        id = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) -  Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (UAR) ...")
         # EXECUTIUON PHASE
         begin
@@ -492,7 +492,7 @@ module SZMGMT
         current_time      = Time.now.to_i
         base_name         = "#{zone_name}_migration#{current_time}"
         path_to_archive   = File.join(tmp_dir, "#{base_name}.uar")
-        id = transaction_id
+        id                = SZONESUtils.transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) - Migration (#{remote_host_spec[:host_name]}->#{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (UAR)...")
         # EXECUTIUON PHASE
         begin
@@ -540,13 +540,6 @@ module SZMGMT
         ensure
           cleaner.cleanup_temporary!
         end
-      end
-
-      private
-      # Generator of transaction id of length 8
-      def self.transaction_id
-        length = 8
-        rand(36**length).to_s(36)
       end
     end
   end
