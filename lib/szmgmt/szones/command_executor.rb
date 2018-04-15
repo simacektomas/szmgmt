@@ -12,14 +12,14 @@ module SZMGMT
       end
 
       def add_command(command)
-        raise ArgumentError 'Not instance of Command class' unless command.is_a? SZMGMT::Command
+        raise ArgumentError 'Not instance of Command class' unless command.is_a? SZONES::Command
         @commands << command
         self
       end
 
       def add_commands(commands)
         commands.each do |command|
-          raise ArgumentError 'Not instance of Command class' unless command.is_a? SZMGMT::Command
+          raise ArgumentError 'Not instance of Command class' unless command.is_a? SZONES::Command
           @commands << command
         end
         self

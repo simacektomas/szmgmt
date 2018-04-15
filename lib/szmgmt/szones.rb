@@ -15,6 +15,8 @@ require 'szmgmt/szones/szones_migration_routines'
 require 'szmgmt/szones/szones_error_handlers'
 require 'szmgmt/szones/szones_backuper'
 require 'szmgmt/szones/szones_cleanuper'
+require 'szmgmt/szones/szones_rollbacker'
+require 'szmgmt/szones/szones_utils'
 
 
 require 'szmgmt/szones/zfs_manager'

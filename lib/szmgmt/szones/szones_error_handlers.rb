@@ -53,9 +53,9 @@ module SZMGMT
         lambda { |command, stdout, stderr, exit_code|
           if exit_code > 0
             if /Not a directory/.match(stderr)
-              raise Exception::BashNotaDirectoryError.new(command, stderr)
+              raise Exceptions::BashNotaDirectoryError.new(command, stderr)
             elsif /No such file or directory/.match(stderr)
-              raise Exception::BashNoSuchFileorDirError.new(command, stderr)
+              raise Exceptions::BashNoSuchFileorDirError.new(command, stderr)
             end
           end
         }
@@ -63,7 +63,7 @@ module SZMGMT
 
       def self.basic_error_handler
         lambda { |command, stdout, stderr, exit_code|
-          raise Exceptions::CommandFailureError.new(command, stderr, exit_code) if exit_code > 0
+          raise Exceptions::CommandFailureError.new(command, stdout, stderr, exit_code) if exit_code > 0
         }
       end
     end
