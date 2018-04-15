@@ -361,7 +361,7 @@ module SZMGMT
           # EXECUTED ON DESTINATION HOST
           #
           Net::SSH.start(destination_host_spec[:host_name], destination_host_spec[:user], destination_host_spec.to_h) do |ssh|
-            SZMGMT.logger.info("MIGRATION (#{id}) - Configuring zone #{destination_zone_name} on remote host...")
+            SZMGMT.logger.info("MIGRATION (#{id}) - Configuring zone #{destination_zone_name} on remote host #{destination_host_spec[:host_name]}...")
             SZONESBasicZoneCommands.configure_zone_from_file(destination_zone_name, zone_config_path).exec_ssh(ssh)
             cleaner.add_persistent_zone_configuration(destination_zone_name, destination_host_spec)
             if destination_zonepath
@@ -395,73 +395,155 @@ module SZMGMT
       # the zone to destination host and Then it will connect to
       # the destination host and attach the zone. Using Unified archives method
       # Steps:
+      #   LOCALHOST
       #   1) archiveadm -z %{zone_name} -re %{archive}  - Create unified archive from zone
       #   2) scp %{archive} %{hostname}:%{archive}      - Copy the archive with zone to another host
-      #   3)
+      #   DESTINATION HOST
+      #   3) zonecfg -z %{destzonename} create          - Create zone configuration from UAR
+      #     ?) adjust zonepath                          - Adjust zonepath if it is diferent
+      #   4) zoneadm -z %{destzonename} attach -a %{ar} - Attach zone to it's image from UAR
+      #   LOCALHOST
+      #   5) zonecfg -d %{zonename}                     - Delete zone configuration
+      #   6) zfs destroy -r %{volume}                   - Destroy zone disk image
       def self.migrate_local_zone_uar(zone_name, destination_host_spec, opts = {})
+        # OPTIONS
+        destination_zone_name = opts[:destination_zone_name] || zone_name
+        if opts[:destination_zonepath]
+          destination_zonepath = File.join( opts[:destination_zonepath], destination_zone_name )
+        end
+        # PREPARATION PHASE
+        cleaner           = SZONESCleanuper.new
+        rollbacker        = SZONESRollbacker.new
+        tmp_dir           = opts[:tmp_dir] || '/var/tmp/'
+        current_time      = Time.now.to_i
+        base_name         = "#{zone_name}_migration#{current_time}"
+        path_to_archive   = File.join(tmp_dir, "#{base_name}.uar")
         id = transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) -  Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (UAR) ...")
-        # PREPARATION PHASE
-        tmp_dir         = '/var/tmp/'
-        cleaner         = SZONESCleanuper.new
-        current_time    = Time.now.to_i
-        archive_name    = "#{zone_name}_migration#{current_time}.uar"
-        path_to_archive = File.join(tmp_dir, archive_name)
         # EXECUTIUON PHASE
         begin
+          #
+          # EXECUTED ON LOCAL MACHINE
+          #
+          SZMGMT.logger.info("MIGRATION (#{id}) - Creating unified archive on localhost #{path_to_archive}...")
           SZONESBasicZoneCommands.create_unified_archive(zone_name, path_to_archive, {:exclude => true, :recovery => true}).exec
-          cleaner.add_file(path_to_archive)
+          cleaner.add_tmp_file(path_to_archive)
+          SZMGMT.logger.info("MIGRATION (#{id}) - Coping unified archive #{path_to_archive} to remote host #{destination_host_spec[:host_name]}...")
           SZONESBasicCommands.copy_files_on_remote_host(path_to_archive, destination_host_spec, tmp_dir).exec
-          cleaner.add_file(path_to_archive, destination_host_spec)
+          cleaner.add_tmp_file(path_to_archive, destination_host_spec)
+          #
+          # EXECUTED ON REMOTE HOST
+          #
           Net::SSH.start(destination_host_spec[:host_name], destination_host_spec[:user], destination_host_spec.to_h) do |ssh|
-            SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ["create -a #{path_to_archive}"]}).exec_ssh(ssh)
-            SZONESBasicZoneCommands.attach_zone(zone_name, {:path_to_archive => path_to_archive}).exec_ssh(ssh)
+            SZMGMT.logger.info("MIGRATION (#{id}) - Configuring zone #{destination_zone_name} on remote host #{destination_host_spec[:host_name]}...")
+            SZONESBasicZoneCommands.configure_zone(destination_zone_name, {:commands => ["create -a #{path_to_archive}"]}).exec_ssh(ssh)
+            cleaner.add_persistent_zone_configuration(destination_zone_name, destination_host_spec)
+            if destination_zonepath
+              # we have to adjust zone path of the configuring zone
+              SZMGMT.logger.info("MIGRATION (#{id}) - Adjusting the zonepath of #{destination_zone_name}...")
+              SZONESBasicZoneCommands.configure_zone(destination_zone_name, {:commands => ["set zonepath=#{destination_zonepath}"]}).exec_ssh(ssh)
+            end
+            SZMGMT.logger.info("MIGRATION (#{id}) - Attaching zone #{destination_zone_name} on remote host #{destination_host_spec[:host_name]}...")
+            SZONESBasicZoneCommands.attach_zone(destination_zone_name, {:path_to_archive => path_to_archive}).exec_ssh(ssh)
           end
+          #
+          # EXECUTED ON LOCAL MACHINE
+          #
+          SZMGMT.logger.info("MIGRATION (#{id}) - Determining zone volume of zone #{zone_name} on localhost...")
+          volume = SZONESBasicRoutines.determine_zone_volume(zone_name)
+          SZMGMT.logger.info("MIGRATION (#{id}) - Deleteting zone #{zone_name} congiguration on localhost...")
+          SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']}).exec
+          SZMGMT.logger.info("MIGRATION (#{id}) - Deleteting zone #{zone_name} disk image on localhost...")
+          SZONESBasicZFSCommands.destroy_dataset(volume, {:recursive => true }).exec
         rescue Exceptions::SZONESError
           SZMGMT.logger.error("MIGRATION (#{id}) - Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' wasn't sucessfull (UAR).")
+          rollbacker.rollback!
+          cleaner.cleanup_on_failure!
         else
           SZMGMT.logger.info("MIGRATION (#{id}) - Migration (localhost -> #{destination_host_spec[:host_name]}) of zone '#{zone_name}' was sucessfull (UAR).")
         ensure
-          cleaner.cleanup!
+          cleaner.cleanup_temporary!
         end
       end
-
+      # Migrate zone from remote host to destination host. It will transfer
+      # the zone to destination host and Then it will connect to
+      # the destination host and attach the zone. Using Unified archives method
+      # Steps:
+      #   REMOTE HOST
+      #   1) archiveadm -z %{zone_name} -re %{archive}  - Create unified archive from zone
+      #   2) scp %{archive} %{hostname}:%{archive}      - Copy the archive with zone to another host
+      #   DESTINATION HOST
+      #   3) zonecfg -z %{destzonename} create          - Create zone configuration from UAR
+      #     ?) adjust zonepath                          - Adjust zonepath if it is diferent
+      #   4) zoneadm -z %{destzonename} attach -a %{ar} - Attach zone to it's image from UAR
+      #   REMOTE HOST
+      #   5) zonecfg -d %{zonename}                     - Delete zone configuration
+      #   6) zfs destroy -r %{volume}                   - Destroy zone disk image
       def self.migrate_remote_zone_uar(zone_name, remote_host_spec, destination_host_spec, opts = {})
         # OPTIONS
-        tmp_dir         = opts[:tmp_dir] || '/var/tmp/'
+        destination_zone_name = opts[:destination_zone_name] || zone_name
+        if opts[:destination_zonepath]
+          destination_zonepath = File.join( opts[:destination_zonepath], destination_zone_name )
+        end
         # PREPARATION PHASE
+        cleaner           = SZONESCleanuper.new
+        rollbacker        = SZONESRollbacker.new
+        tmp_dir           = opts[:tmp_dir] || '/var/tmp/'
+        current_time      = Time.now.to_i
+        base_name         = "#{zone_name}_migration#{current_time}"
+        path_to_archive   = File.join(tmp_dir, "#{base_name}.uar")
         id = transaction_id
         SZMGMT.logger.info("MIGRATION (#{id}) - Migration (#{remote_host_spec[:host_name]}->#{destination_host_spec[:host_name]}) of zone '#{zone_name}' has been initialized (UAR)...")
-        cleaner         = SZONESCleanuper.new
-        current_time    = Time.now.to_i
-        archive_name    = "#{zone_name}_migration#{current_time}.uar"
-        path_to_archive = File.join(tmp_dir, archive_name)
         # EXECUTIUON PHASE
         begin
-          # Connect to remote host and perform UAR creation along with
-          # sending it to destination host
+          #
+          # EXECUTED ON REMOTE HOST
+          #
           Net::SSH.start(remote_host_spec[:host_name], remote_host_spec[:user], remote_host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("MIGRATION (#{id}) - Creating unified archive on #{remote_host_spec[:host_name]} #{path_to_archive}...")
             SZONESBasicZoneCommands.create_unified_archive(zone_name, path_to_archive, {:exclude => true, :recovery => true}).exec_ssh(ssh)
-            cleaner.add_file(path_to_archive, remote_host_spec)
+            cleaner.add_tmp_file(path_to_archive)
+            SZMGMT.logger.info("MIGRATION (#{id}) - Coping unified archive #{path_to_archive} from #{remote_host_spec[:host_name]} to remote host #{destination_host_spec[:host_name]}...")
             SZONESBasicCommands.copy_files_on_remote_host(path_to_archive, destination_host_spec, tmp_dir).exec_ssh(ssh)
-            cleaner.add_file(path_to_archive, destination_host_spec)
+            cleaner.add_tmp_file(path_to_archive, destination_host_spec)
           end
-
+          #
+          # EXECUTED ON DESTINATION HOST
+          #
           Net::SSH.start(destination_host_spec[:host_name], destination_host_spec[:user], destination_host_spec.to_h) do |ssh|
-            SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ["create -a #{path_to_archive}"]}).exec_ssh(ssh)
-            SZONESBasicZoneCommands.attach_zone(zone_name, {:path_to_archive => path_to_archive}).exec_ssh(ssh)
+            SZMGMT.logger.info("MIGRATION (#{id}) - Configuring zone #{destination_zone_name} on remote host #{destination_host_spec[:host_name]}...")
+            SZONESBasicZoneCommands.configure_zone(destination_zone_name, {:commands => ["create -a #{path_to_archive}"]}).exec_ssh(ssh)
+            cleaner.add_persistent_zone_configuration(destination_zone_name, destination_host_spec)
+            if destination_zonepath
+              # we have to adjust zone path of the configuring zone
+              SZMGMT.logger.info("MIGRATION (#{id}) - Adjusting the zonepath of #{destination_zone_name}...")
+              SZONESBasicZoneCommands.configure_zone(destination_zone_name, {:commands => ["set zonepath=#{destination_zonepath}"]}).exec_ssh(ssh)
+            end
+            SZMGMT.logger.info("MIGRATION (#{id}) - Attaching zone #{destination_zone_name} on remote host #{destination_host_spec[:host_name]}...")
+            SZONESBasicZoneCommands.attach_zone(destination_zone_name, {:path_to_archive => path_to_archive}).exec_ssh(ssh)
+          end
+          #
+          # EXECUTED ON REMOTE HOST
+          #
+          Net::SSH.start(remote_host_spec[:host_name], remote_host_spec[:user], remote_host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("MIGRATION (#{id}) - Determining zone volume of zone #{zone_name} on localhost...")
+            volume = SZONESBasicRoutines.determine_zone_volume(zone_name, ssh)
+            SZMGMT.logger.info("MIGRATION (#{id}) - Deleteting zone #{zone_name} congiguration on host #{remote_host_spec[:host_name]}...")
+            SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']}).exec_ssh(ssh)
+            SZMGMT.logger.info("MIGRATION (#{id}) - Deleteting zone #{zone_name} disk image on host #{remote_host_spec[:host_name]}...")
+            SZONESBasicZFSCommands.destroy_dataset(volume, {:recursive => true }).exec_ssh(ssh)
           end
         rescue Exceptions::SZONESError
           SZMGMT.logger.error("MIGRATION (#{id}) - Migration (#{remote_host_spec[:host_name]}->#{destination_host_spec[:host_name]}) of zone '#{zone_name}' wasn't sucessfull (UAR).")
         else
           SZMGMT.logger.info("MIGRATION (#{id}) - Migration (#{remote_host_spec[:host_name]}->#{destination_host_spec[:host_name]}) of zone '#{zone_name}' was sucessfull (UAR).")
         ensure
-          cleaner.cleanup!
+          cleaner.cleanup_temporary!
         end
       end
 
       private
-
+      # Generator of transaction id of length 8
       def self.transaction_id
         length = 8
         rand(36**length).to_s(36)
