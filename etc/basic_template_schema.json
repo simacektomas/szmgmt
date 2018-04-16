@@ -1,0 +1,18 @@
+{
+  "title": "general-vm-template",
+  "description": "Used for general template distinction",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the vm template"
+    },
+    "type": {
+      "enum": [ "szones", "vbox" ],
+      "description": "Type of the vm template"
+    }
+
+  },
+  "required": [ "name", "type" ],
+  "additionalProperties": true
+}

@@ -1,0 +1,262 @@
+{
+  "definitions": {
+    "admin": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "admin" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "user": { "type": "string" },
+            "auths": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "anet": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "anet" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "linkname": { "type": "string" },
+            "lower-link": { "type": "string" },
+            "mac-address": { "enum": [ "auto", "factory", "random", "default" ] },
+            "link-protection": { "type": "string" },
+            "allowed-address": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "oneOf": [
+                  { "format": "hostname" },
+                  { "format": "ipv4" },
+                  { "format": "ipv6" }
+                ]
+              }
+            },
+            "defrouter": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "dataset": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "dataset" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "alias": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "fs": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "fs" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "dir": { "type": "string" },
+            "special": { "type": "string" },
+            "raw": { "type": "string" },
+            "type": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "capped-cpu": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "capped-cpu" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "ncpus": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "capped-memory": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "capped-memory" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "physical": { "type": "string" },
+            "locked": { "type": "string" },
+            "swap": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "net": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": [ "net" ] },
+        "values": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "oneOf": [
+                { "format": "hostname" },
+                { "format": "ipv4" },
+                { "format": "ipv6" }
+              ]
+            },
+            "allowed-address": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "oneOf": [
+                  { "format": "hostname" },
+                  { "format": "ipv4" },
+                  { "format": "ipv6" }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [ "type", "values" ],
+      "additionalProperties": false
+    },
+    "ipv4_config": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address_type": { "enum": [ "dhcp", "static" ] },
+        "static_address": {
+          "type": "string",
+          "oneOf": [ {"format": "ipv4"} ]
+        },
+        "default_route": {
+          "type": "string",
+          "oneOf": [ {"format": "ipv4"} ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "title": "zone-template",
+  "description": "Template used for creating Solaris Zones",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string"},
+    "type": { "enum": [ "szones" ] },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "zonepath": { "type": "string" },
+        "autoboot": { "type": "boolean" },
+        "brand":  {
+          "enum": [ "solaris", "solaris10", "solaris-kz" ]
+        },
+        "ip-type": {
+          "enum": [ "shared", "exclusive" ]
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "oneOf": [
+              { "$ref": "#/definitions/admin" },
+              { "$ref": "#/definitions/anet" },
+              { "$ref": "#/definitions/dataset" },
+              { "$ref": "#/definitions/fs" },
+              { "$ref": "#/definitions/capped-cpu" },
+              { "$ref": "#/definitions/capped-memory" },
+              { "$ref": "#/definitions/net" }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "manifest": {
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "object",
+          "properties": {
+            "password": { "type": "string" },
+            "type": { "enum": [ "normal", "role" ] },
+            "expire": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "login": { "type": "string" },
+            "password": { "type": "string" },
+            "shell": { "type": "string" },
+            "type": { "enum": [ "normal", "role" ] },
+            "profiles": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "roles": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "sudoers": { "type": "string" },
+            "expire": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "hostname": { "type": "string" },
+        "timezone": { "type": "string" },
+        "locale": { "type": "string" },
+        "terminal": { "type": "string" },
+        "keyboard": { "type": "string" },
+        "network": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "oneOf": [ {"$ref": "#/definitions/ipv4_config"} ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
