@@ -16,7 +16,9 @@ require 'szmgmt/configuration'
 require 'szmgmt/connection_spec_builder'
 
 
-require 'szmgmt/szmgmt_api'
 require 'szmgmt/json_loader'
-require 'szmgmt/version'
+require 'szmgmt/json_validator'
+
+require 'szmgmt/szmgmt_api'
 require 'szmgmt/szmgmt'
+require 'szmgmt/version'
