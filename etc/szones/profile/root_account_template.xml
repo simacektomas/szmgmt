@@ -1,5 +1,5 @@
       <property_group type="application" name="root_account">
         <propval type="astring" name="type" value="%{type}"/>
         <propval type="astring" name="login" value="root"/>
-        <propval type="astring" name="password" value="$5$Cl3aGBJi$mlX1fzOIEdF6MC/st2yfilDrTEQqopKYfP/18MJKSD3"/>
+        <propval type="astring" name="password" value="%{password}"/>
       </property_group>

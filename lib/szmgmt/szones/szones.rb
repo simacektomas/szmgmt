@@ -5,7 +5,9 @@ module SZMGMT
         :manifest_template => 'manifest/manifest_template.xml',
         :manifest_template_path => '/etc/szmgmt/szones/manifest/manifest_template.xml',
         :szones_schema => 'szone_template_schema.json',
-        :szones_schema_path => '/etc/szmgmt/szones/szone_template_schema'
+        :szones_schema_path => '/etc/szmgmt/szones/szone_template_schema',
+        :profile_template => 'profile',
+        :profile_template_dir => '/etc/szmgmt/szones/profile'
     }
 
     @valid_config_keys = @configuration.keys
@@ -36,6 +38,10 @@ module SZMGMT
       @configuration[:manifest_template_path] = File.join(SZMGMT.configuration[:root_dir],
                                                           @configuration[:module_name],
                                                           @configuration[:manifest_template])
+      @configuration[:profile_template_dir] = File.join(SZMGMT.configuration[:root_dir],
+                                                        @configuration[:module_name],
+                                                        @configuration[:profile_template])
+
       #init_datasets
     end
 
