@@ -1,0 +1,8 @@
+    <instance enabled="true" name="default">
+      <property_group type="application" name="install_ipv4_interface">
+        <propval type="net_address_v4" name="static_address" value="%{static_address}"/>
+        <propval type="astring" name="name" value="%{name}/v4"/>
+        <propval type="astring" name="address_type" value="%{address_type}"/>
+        <propval type="net_address_v4" name="default_route" value="%{default_route}"/>
+      </property_group>
+    </instance>

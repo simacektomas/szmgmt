@@ -1,0 +1,7 @@
+  <service version="1" type="service" name="network/physical">
+    <instance enabled="true" name="default">
+      <property_group type="application" name="netcfg">
+        <propval type="astring" name="active_ncp" value="%{type}"/>
+      </property_group>
+    </instance>
+  </service>

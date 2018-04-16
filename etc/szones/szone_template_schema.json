@@ -145,6 +145,57 @@
       "required": [ "type", "values" ],
       "additionalProperties": false
     },
+    "root_config": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "root"
+          ]
+        },
+        "values": {
+          "type": "object",
+          "properties": {
+            "password": { "type": "string" },
+            "type": { "enum": [ "normal", "role" ] },
+            "expire": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "user_config": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "user"
+          ]
+        },
+        "values": {
+          "type": "object",
+          "properties": {
+            "login": { "type": "string" },
+            "password": { "type": "string" },
+            "shell": { "type": "string" },
+            "type": { "enum": [ "normal", "role" ] },
+            "profiles": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "roles": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "sudoers": { "type": "string" },
+            "expire": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "ipv4_config": {
       "type": "object",
       "properties": {
@@ -213,40 +264,19 @@
     "profile": {
       "type": "object",
       "properties": {
-        "root": {
-          "type": "object",
-          "properties": {
-            "password": { "type": "string" },
-            "type": { "enum": [ "normal", "role" ] },
-            "expire": { "type": "string" }
-          },
-          "additionalProperties": false
-        },
-        "user": {
-          "type": "object",
-          "properties": {
-            "login": { "type": "string" },
-            "password": { "type": "string" },
-            "shell": { "type": "string" },
-            "type": { "enum": [ "normal", "role" ] },
-            "profiles": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "roles": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "sudoers": { "type": "string" },
-            "expire": { "type": "string" }
-          },
-          "additionalProperties": false
+        "users" : {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "oneOf": [
+              {"$ref": "#/definitions/root_config"},
+              {"$ref": "#/definitions/user_config"}
+            ]
+          }
         },
         "hostname": { "type": "string" },
         "timezone": { "type": "string" },
         "locale": { "type": "string" },
-        "terminal": { "type": "string" },
-        "keyboard": { "type": "string" },
         "network": {
           "type": "array",
           "items": {

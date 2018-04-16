@@ -1,0 +1,3 @@
+  <service version="1" type="service" name="network/install">
+%{interfaces}
+  </service>
