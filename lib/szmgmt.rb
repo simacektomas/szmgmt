@@ -8,7 +8,7 @@ require 'logger'
 
 require 'szmgmt/entities'
 require 'szmgmt/exceptions'
-require 'szmgmt/templates'
+require 'szmgmt/vm_specs'
 require 'szmgmt/szones'
 require 'szmgmt/cli'
 

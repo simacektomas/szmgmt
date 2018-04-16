@@ -28,6 +28,22 @@ module SZMGMT
       false
     end
 
+    def validate_vm_spec(path_to_spec, full_validation = false)
+      VMSpecs::VMSpecsManager.validate_vm_spec(path_to_spec, full_validation)
+    end
+
+    def load_vm_spec(path_to_spec)
+      VMSpecs::VMSpecsManager.load_vm_spec(path_to_spec)
+    end
+
+    #############################################################################
+    # API METHODS
+    #############################################################################
+    # Returns HostSpec class that specify how to connect to host with ssh
+    def create_host_spec(hostname, options = {})
+      Entities::HostSpec.new(hostname, options)
+    end
+
     private
 
     def init_modules
@@ -45,16 +61,17 @@ module SZMGMT
           raise Exceptions::ModuleNotFoundedError.new(module_name.upcase)
         end
       end
-      # initialize Templates module
-      SZMGMT.logger.info("Initializing module 'Templates'.")
-      Templates.init SZMGMT.configuration
+      # initialize VMSpec module
+      SZMGMT.logger.info("Initializing module 'VMSpecs'.")
+      VMSpecs.init SZMGMT.configuration
     end
 
     def register_request_handlers
       # register request handlers for vm modules
       @loaded_modules.each do |modul|
         begin
-          SZMGMT.logger.info("Registering #{modul.request_handler.to_s} request handler for module  #{modul.to_s}.")
+          SZMGMT.logger.info("Registering request handler for module  #{modul.to_s}.")
+          SZMGMT.logger.debug("Registering  #{modul.request_handler.class.to_s} request handler for module  #{modul.to_s}.")
           (@request_handlers ||= []) << modul.request_handler
         rescue NoMethodError
           raise Exceptions::ModuleInvalidInterfaceError.new(modul.to_s, 'request_handler')

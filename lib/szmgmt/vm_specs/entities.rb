@@ -1,0 +1,1 @@
+require 'szmgmt/vm_specs/entities/vm_spec'

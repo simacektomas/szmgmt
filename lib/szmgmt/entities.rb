@@ -1,0 +1,1 @@
+require 'szmgmt/entities/host_spec'

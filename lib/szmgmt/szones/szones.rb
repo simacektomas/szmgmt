@@ -4,7 +4,9 @@ module SZMGMT
         :module_name => 'szones',
         :root_dataset => 'rpool/szones',
         :template_dataset => 'rpool/szones/templates',
-        :default_dataset => 'rpool/szones/zones'
+        :default_dataset => 'rpool/szones/zones',
+        :szones_schema => 'szone_template_schema.json',
+        :szones_schema_path => '/etc/szmgmt/szones/szone_template_schema'
     }
 
     @valid_config_keys = @configuration.keys
@@ -26,8 +28,13 @@ module SZMGMT
 
     # Demanded interface for VM_MODULE
 
-    def self.init(global_configuration = {})
-      init_datasets
+    def self.init(global_configuration)
+      # Determine schema path from global configuration
+      # module name and name of the schema
+      @configuration[:szones_schema_path] = File.join(SZMGMT.configuration[:root_dir],
+                                                      @configuration[:module_name],
+                                                      @configuration[:szones_schema])
+      #init_datasets
     end
 
     def self.request_handler

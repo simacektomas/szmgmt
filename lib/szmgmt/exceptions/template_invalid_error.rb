@@ -2,9 +2,9 @@ module SZMGMT
   module Exceptions
     class TemplateInvalidError < StandardError
       attr_reader :errors
-      def initialize(template, schema, errors=[])
+      def initialize(schema, errors=[])
         @errors = errors
-        super("Template on path #{template} does not follow the #{schema} schema.")
+        super("Template does not follow the #{schema} schema. #{@errors}")
       end
     end
   end
