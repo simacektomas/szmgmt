@@ -1,0 +1,7 @@
+  <service version="1" type="service" name="system/timezone">
+    <instance enabled="true" name="default">
+      <property_group type="application" name="timezone">
+        <propval type="astring" name="localtime" value="%{timezone}"/>
+      </property_group>
+    </instance>
+  </service>

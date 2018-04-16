@@ -1,0 +1,7 @@
+  <service version="1" type="service" name="system/identity">
+    <instance enabled="true" name="node">
+      <property_group type="application" name="config">
+        <propval type="astring" name="nodename" value="%{hostname}"/>
+      </property_group>
+    </instance>
+  </service>

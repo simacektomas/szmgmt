@@ -1,0 +1,11 @@
+      <property_group type="application" name="user_account">
+        <propval type="astring" name="roles" value="%{roles}"/>
+        <propval type="astring" name="shell" value="%{shell}"/>
+        <propval type="astring" name="login" value="%{login}"/>
+        <propval type="astring" name="password" value="%{password}"/>
+        <propval type="astring" name="type" value="%{type}"/>
+        <propval type="astring" name="sudoers" value="%{sudoers}"/>
+        <propval type="count" name="gid" value="%{gid}"/>
+        <propval type="astring" name="description" value="%{description}"/>
+        <propval type="astring" name="profiles" value="%{profiles}"/>
+      </property_group>

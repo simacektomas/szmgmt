@@ -1,0 +1,7 @@
+  <service version="1" type="service" name="system/environment">
+    <instance enabled="true" name="init">
+      <property_group type="application" name="environment">
+        <propval type="astring" name="LANG" value="%{locale}"/>
+      </property_group>
+    </instance>
+  </service>

@@ -1,0 +1,6 @@
+ <service version="1" type="service" name="system/config-user">
+    <instance enabled="true" name="default">
+      %{root_account}
+      %{user_account}
+    </instance>
+  </service>
