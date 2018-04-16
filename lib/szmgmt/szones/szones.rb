@@ -2,9 +2,8 @@ module SZMGMT
   module SZONES
     @configuration = {
         :module_name => 'szones',
-        :root_dataset => 'rpool/szones',
-        :template_dataset => 'rpool/szones/templates',
-        :default_dataset => 'rpool/szones/zones',
+        :manifest_template => 'manifest/manifest_template.xml',
+        :manifest_template_path => '/etc/szmgmt/szones/manifest/manifest_template.xml',
         :szones_schema => 'szone_template_schema.json',
         :szones_schema_path => '/etc/szmgmt/szones/szone_template_schema'
     }
@@ -34,6 +33,9 @@ module SZMGMT
       @configuration[:szones_schema_path] = File.join(SZMGMT.configuration[:root_dir],
                                                       @configuration[:module_name],
                                                       @configuration[:szones_schema])
+      @configuration[:manifest_template_path] = File.join(SZMGMT.configuration[:root_dir],
+                                                          @configuration[:module_name],
+                                                          @configuration[:manifest_template])
       #init_datasets
     end
 

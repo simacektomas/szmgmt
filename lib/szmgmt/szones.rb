@@ -1,3 +1,5 @@
+require 'szmgmt/szones/entities'
+
 require 'szmgmt/szones/exceptions'
 
 require 'szmgmt/szones/command'
@@ -14,6 +16,7 @@ require 'szmgmt/szones/szones_basic_commands'
 require 'szmgmt/szones/szones_basic_zone_commands'
 require 'szmgmt/szones/szones_basic_zfs_commands'
 require 'szmgmt/szones/szones_vm_spec_manager'
+require 'szmgmt/szones/szones_vm_spec_parser'
 require 'szmgmt/szones/szones_error_handlers'
 require 'szmgmt/szones/szones_backuper'
 require 'szmgmt/szones/szones_cleanuper'
