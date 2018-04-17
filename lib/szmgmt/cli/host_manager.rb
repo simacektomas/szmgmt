@@ -8,11 +8,10 @@ module SZMGMT
           :specs_dir => 'hosts'
       }
 
-      @@default_index = {
-          'hosts' => [
-            'localhost'
-          ]
-      }
+      @@default_index = [
+        'localhost'
+      ]
+
 
       def initialize
         @specs_dir = File.join(@@configuration[:root_dir],  @@configuration[:specs_dir])
@@ -24,15 +23,15 @@ module SZMGMT
       end
 
       def add_host(host_spec)
-        return if @index['hosts'].include? host_spec[:host_name]
-        @index['hosts'] << host_spec[:host_name]
+        return if @index.include? host_spec[:host_name]
+        @index << host_spec[:host_name]
         write_index
         write_host(host_spec)
       end
 
       def remove_host(hostname)
-        return unless @index['hosts'].include? hostname
-        @index = @index['hosts'] - [hostname]
+        return unless @index.include? hostname
+        @index = @index - [hostname]
         write_index
         File.delete(File.join(@specs_dir, "#{hostname}_spec.json"))
       end
@@ -43,7 +42,7 @@ module SZMGMT
 
       def load_all_host_specs
         specs = []
-        @index['hosts'].each do |hostname|
+        @index.each do |hostname|
           next if hostname == 'localhost'
           specs << load_host(hostname)
         end
@@ -77,7 +76,7 @@ module SZMGMT
         file_name = File.join(@specs_dir, "#{host_specs[:host_name]}_spec.json")
         begin
           File.open(file_name,'w') do |file|
-            file.write(host_specs.to_json)
+            file.write(host_specs.to_h.to_json)
           end
         rescue Errno::ENOENT
           false

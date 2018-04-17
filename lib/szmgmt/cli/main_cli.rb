@@ -5,14 +5,12 @@ module SZMGMT
           :root_dir => File.join(ENV['HOME'], '.szmgmt')
       }
 
-      def self.configuration
-
-      end
-
       def initialize(*args)
-        super
+        super(*args)
         self.class.initialize_cli
         @host_manager = CLI::HostManager.new
+        SZMGMT.logger.level = Logger::INFO
+        @szmgmt_api = SZMGMT::SZMGMTAPI.new
       end
 
       def self.initialize_cli
@@ -70,7 +68,7 @@ module SZMGMT
 
       desc 'deploy [ZONE_ID, ...]', 'Deploy zones by their identifiers. Id is in format of <zonename:hostname>'
       def deploy(*zone_identifiers)
-        zones.each do |zone|
+        zone_identifiers.each do |zone|
           puts zone
         end
       end
@@ -108,10 +106,19 @@ module SZMGMT
                     desc: 'Type of migration to use. Types are d = direct, z = zfs archive, u = unified archive.'
       def backup(*zone_identifiers)
         return if zone_identifiers.empty?
-
+        backuper = ZoneBackuper.new
         zone_identifiers.each do |zone_id|
-          tokens = zone_id.split(':')
-          zone_name = tokens.first
+          zone_name, hostname = zone_id.split(':')
+          if hostname
+            host_spec = @host_manager.load_host_spec(hostname)
+            # Create default spec for this host
+            unless host_spec
+              SZMGMT.logger.warn("Using default host_spec values for host #{hostname}")
+              host_spec = SZMGMT::Entities::HostSpec.new(hostname)
+            end
+          end
+          p host_spec
+          backuper.add_zone_to_backup(zone_name, host_spec)
 
         end
       end
