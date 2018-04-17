@@ -4,17 +4,22 @@ module SZMGMT
       class SZONEConfiguration
         def initialize(vm_spec_configuration)
           @vm_spec_configuration = vm_spec_configuration
-          @zonecfg_commands = ['create -b']
-          parse_configuration
+          if @vm_spec_configuration
+            @zonecfg_commands = ['create -b']
+            parse_configuration
+          else
+            @zonecfg_commands = ['create']
+            @zonecfg_commands << 'exit'
+          end
         end
 
-        def zonecfg_export
+        def export_configuration
           @zonecfg_commands.join("\n")
         end
 
-        def zonecfg_export_to_file(path_to_file)
+        def export_configuration_to_file(path_to_file)
           File.open(path_to_file, 'w') do |file|
-            file.write(zonecfg_export)
+            file.write(export_configuration)
           end
         end
 
@@ -29,7 +34,7 @@ module SZMGMT
               @zonecfg_commands << "set #{property}=#{value}"
             end
           end
-          @zonecfg_commands << "exit"
+          @zonecfg_commands << 'exit'
         end
 
         def parse_resources(resources)

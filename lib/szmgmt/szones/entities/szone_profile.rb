@@ -39,7 +39,7 @@ module SZMGMT
 
         def export_profile_to_file(path_to_file)
           File.open(path_to_file, 'w') do |file|
-            file.write(export_manifest)
+            file.write(export_profile)
           end
         end
 

@@ -12,6 +12,12 @@ module SZMGMT
         length = 8
         rand(36**length).to_s(36)
       end
+
+      # Generator of random file name.
+      def self.random_id
+        length = 4
+        rand(36**length).to_s(36)
+      end
     end
   end
 end

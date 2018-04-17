@@ -6,20 +6,18 @@ module SZMGMT
       end
 
       def vm_spec_configuration
-        if @vm_spec['configuration']
-          @szone_configuration ||= Entities::SZONEConfiguration.new(@vm_spec['configuration'])
-        end
+        @szone_configuration ||= SZMGMT::SZONES::Entities::SZONEConfiguration.new(@vm_spec['configuration'])
       end
 
       def vm_spec_manifest
         if @vm_spec['manifest']
-          @szone_manifest ||= Entities::SZONEManifest.new(@vm_spec['manifest'])
+          @szone_manifest ||= SZMGMT::SZONES::Entities::SZONEManifest.new(@vm_spec['manifest'])
         end
       end
 
       def vm_spec_profile
         if @vm_spec['profile']
-          @szone_profile ||= Entities::SZONEProfile.new(@vm_spec['profile'])
+          @szone_profile ||= SZMGMT::SZONES::Entities::SZONEProfile.new(@vm_spec['profile'])
         end
       end
     end

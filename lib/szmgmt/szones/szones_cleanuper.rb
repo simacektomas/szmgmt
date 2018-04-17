@@ -7,6 +7,7 @@ module SZMGMT
 
         @per_volumes_by_hosts = Hash.new { |h, k| h[k] = [] }
         @per_zonecfg_by_hosts = Hash.new { |h, k| h[k] = [] }
+        @per_install_by_hosts = Hash.new { |h, k| h[k] = [] }
         @hosts_specs = {}
       end
       # Add temporary file that will be deleted in every case
@@ -35,6 +36,11 @@ module SZMGMT
       # needed after it ends.
       def add_persistent_zone_configuration(zone_name, host_spec = {:host_name => 'localhost'})
         @per_zonecfg_by_hosts[host_spec[:host_name]] << zone_name
+        @hosts_specs[host_spec[:host_name]] ||= host_spec.to_h
+      end
+
+      def add_persistent_zone_installation(zone_name, host_spec = {:host_name => 'localhost'})
+        @per_install_by_hosts[host_spec[:host_name]] << zone_name
         @hosts_specs[host_spec[:host_name]] ||= host_spec.to_h
       end
 
@@ -94,6 +100,15 @@ module SZMGMT
       end
 
       def cleanup_persistent_routine(host, ssh = nil)
+        @per_install_by_hosts[host].each do |zone_name|
+          SZMGMT.logger.info("CLEANUP: Removing zone installation '#{zone_name}' from host '#{host}'.")
+          begin
+            uninstall = SZONESBasicZoneCommands.uninstall_zone(zone_name, {:commands => ['delete -F']})
+            ssh ? uninstall.exec_ssh(ssh) : uninstall.exec
+          rescue Exceptions::SZONESError
+            SZMGMT.logger.warn("CLEANUP: Cannot remove zone installation '#{zone_name}' from host '#{host}'.")
+          end
+        end
         @per_volumes_by_hosts[host].each do |volume_name|
           SZMGMT.logger.info("CLEANUP: Removing persistent volume '#{volume_name}' from host '#{host}'.")
           begin
@@ -107,7 +122,7 @@ module SZMGMT
           SZMGMT.logger.info("CLEANUP: Removing zone configuration '#{zone_name}' from host '#{host}'.")
           begin
             delete = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']})
-            ssh ? destroy.exec_ssh(ssh) : destroy.exec
+            ssh ? delete.exec_ssh(ssh) : delete.exec
           rescue Exceptions::SZONESError
             SZMGMT.logger.warn("CLEANUP: Cannot remove zone configuration '#{zone_name}' from host '#{host}'.")
           end
