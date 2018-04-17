@@ -88,7 +88,8 @@ module SZMGMT
         file_name = File.join(@specs_dir, "#{hostname}_spec.json")
         begin
           json_raw = File.read(file_name)
-          JSON.parse(json_raw)
+          hash = JSON.parse(json_raw)
+          hash.inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo}
         rescue Errno::ENOENT
           nil
         rescue JSON::ParserError
