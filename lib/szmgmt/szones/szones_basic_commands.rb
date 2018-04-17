@@ -34,6 +34,24 @@ module SZMGMT
                     SZONESErrorHandlers.bash_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end
+      # Copy file from remote host over scp. You can specify
+      # multiple files to copy as well as remote directory
+      # in which the files will be stored.
+      def self.copy_files_from_remote_host(paths_to_files, remote_host_spec, local_dir)
+        files = paths_to_files
+        if paths_to_files.is_a? Array
+          tmp = []
+          paths_to_files.each do |file|
+            tmp << "#{remote_host_spec[:host_name]}:#{file}"
+          end
+          files = tmp.join(' ')
+        else
+          files = "#{remote_host_spec[:host_name]}:#{files}"
+        end
+        Command.new("/usr/bin/scp #{files} #{local_dir}",
+                    SZONESErrorHandlers.bash_error_handler,
+                    SZONESErrorHandlers.basic_error_handler)
+      end
       # Packup files to one archive using zip method. You
       # can specify junk_paths options to erase path from filenames
       # and store only the files

@@ -374,6 +374,228 @@ module SZMGMT
         full_template_name = "template_#{template_name}"
         deploy_rtemplate_from_vm_spec(full_template_name, vm_spec, opts)
       end
+      #
+      #
+      #
+      #
+      #
+      def self.deploy_zone_from_zone(zone_name, source_zone_name, opts = {})
+        ##########
+        # OPTIONS
+        boot                = opts[:boot] || false
+        if opts[:zonepath]
+          zonepath = File.join( opts[:zonepath], zone_name )
+        end
+        ##########
+        # PREPARATION
+        cleaner             = SZONESCleanuper.new
+        id                  = SZONESUtils.transaction_id     # Used for marking this transaction
+        ##########
+        # EXECUTION
+        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} from zone #{source_zone_name} has been initialize...")
+        SZMGMT.logger.info("DEPLOY (#{id}) -      type: clone")
+        begin
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
+          booted = true unless halt.stderr =~ /already halted/
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
+                                                                  source_zone_name,
+                                                                  {
+                                                                      :id => id,
+                                                                      :zonepath => zonepath,
+                                                                      :cleaner => cleaner
+                                                                  })
+        rescue Exceptions::SZONESError
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
+          cleaner.cleanup_on_failure!
+        else
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+        ensure
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          cleaner.cleanup_temporary!
+        end
+      end
+      #
+      #
+      #
+      #
+      #
+      def self.rdeploy_zone_from_zone(zone_name, dest_host_spec, source_zone_name, opts = {})
+        ##########
+        # OPTIONS
+        boot                = opts[:boot] || false
+        if opts[:zonepath]
+          zonepath = File.join( opts[:zonepath], zone_name )
+        end
+        cleaner             = SZONESCleanuper.new
+        id                  = SZONESUtils.transaction_id     # Used for marking this transaction
+        ##########
+        # EXECUTION
+        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} from zone #{source_zone_name} on host #{dest_host_spec[:host_name]} has been initialize...")
+        SZMGMT.logger.info("DEPLOY (#{id}) -      type: clone")
+        begin
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
+          ssh = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
+          booted = true unless halt.stderr =~ /already halted/
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
+                                                                  source_zone_name,
+                                                                  {
+                                                                      :id => id,
+                                                                      :zonepath => zonepath,
+                                                                      :cleaner => cleaner
+                                                                  },
+                                                                  ssh,
+                                                                  dest_host_spec)
+        rescue Exceptions::SZONESError
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
+          cleaner.cleanup_on_failure!
+        else
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+        ensure
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          cleaner.cleanup_temporary!
+          ssh.close if ssh
+        end
+      end
+      #
+      #
+      #
+      #
+      #
+      def self.deploy_zone_from_rzone(zone_name, source_host_spec, source_zone_name, opts = {})
+        ##########
+        # OPTIONS
+        boot                = opts[:boot] || false
+        if opts[:zonepath]
+          zonepath = File.join( opts[:zonepath], zone_name )
+        end
+        tmp_dir             = opts[:tmp_dir] || '/var/tmp'
+        cleaner             = SZONESCleanuper.new
+        id                  = SZONESUtils.transaction_id     # Used for marking this transaction
+        ##########
+        # EXECUTION
+        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} from zone '#{source_zone_name}:#{source_host_spec[:host_name]}' has been initialize...")
+        SZMGMT.logger.info("DEPLOY (#{id}) -      type: ZFS archive")
+        begin
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{source_host_spec[:host_name]}...")
+          ssh = Net::SSH.start(source_host_spec[:host_name], source_host_spec[:user], source_host_spec.to_h)
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
+          booted = true unless halt.stderr =~ /already halted/
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_zfs_archive(source_zone_name,
+                                                                                                    {:id => id, :cleaner => cleaner}.merge(opts), ssh,
+                                                                                                    source_host_spec )
+          SZONESBasicCommands.copy_files_from_remote_host([path_to_archive, path_to_zonecfg], source_host_spec, tmp_dir).exec
+          SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
+                                                                   { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts))
+
+        rescue Exceptions::SZONESError
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
+          cleaner.cleanup_on_failure!
+        else
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}) if boot
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+        ensure
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          cleaner.cleanup_temporary!
+          ssh.close if ssh
+        end
+      end
+      #
+      #
+      #
+      #
+      #
+      def self.deploy_rzone_from_zone(zone_name, dest_host_spec, source_zone_name, opts = {})
+        ##########
+        # OPTIONS
+        boot                = opts[:boot] || false
+        if opts[:zonepath]
+          zonepath = File.join( opts[:zonepath], zone_name )
+        end
+        cleaner             = SZONESCleanuper.new
+        id                  = SZONESUtils.transaction_id     # Used for marking this transaction
+        ##########
+        # EXECUTION
+        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} from zone '#{source_zone_name}' has been initialize...")
+        SZMGMT.logger.info("DEPLOY (#{id}) -      type: ZFS archive")
+        begin
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{}...")
+          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
+          booted = true unless halt.stderr =~ /already halted/
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on localhost halted.")
+          path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_remote_zfs_archive(source_zone_name, dest_host_spec,
+                                                                                                           {:id => id, :cleaner => cleaner}.merge(opts))
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
+          ssh = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
+          SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
+                                                                   { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts),
+                                                                   ssh, dest_host_spec)
+        rescue Exceptions::SZONESError
+          SZMGMT.logger.error("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} failed.")
+          cleaner.cleanup_on_failure!
+        else
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+        ensure
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}) if booted
+          cleaner.cleanup_temporary!
+          ssh.close if ssh
+        end
+      end
+      #
+      #
+      #
+      #
+      #
+      def self.deploy_rzone_from_rzone(zone_name, dest_host_spec, source_zone_name, source_host_spec, opts = {})
+        ##########
+        # OPTIONS
+        boot                = opts[:boot] || false
+        if opts[:zonepath]
+          zonepath = File.join( opts[:zonepath], zone_name )
+        end
+        cleaner             = SZONESCleanuper.new
+        id                  = SZONESUtils.transaction_id     # Used for marking this transaction
+        ##########
+        # EXECUTION
+        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} from zone '#{source_zone_name}' has been initialize...")
+        SZMGMT.logger.info("DEPLOY (#{id}) -      type: ZFS archive")
+        begin
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{source_host_spec[:host_name]}...")
+          ssh_source = Net::SSH.start(source_host_spec[:host_name], source_host_spec[:user], source_host_spec.to_h)
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name} on  host #{source_host_spec[:host_name]}...")
+          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh_source)
+          booted = true unless halt.stderr =~ /already halted/
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on host #{source_host_spec[:host_name]} halted.")
+          path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_remote_zfs_archive(source_zone_name, dest_host_spec,
+                                                                                                           {:id => id, :cleaner => cleaner}.merge(opts),
+                                                                                                           ssh_source, source_host_spec)
+          SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
+          ssh_dest = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
+          SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
+                                                                   { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts),
+                                                                   ssh_dest, dest_host_spec)
+        rescue Exceptions::SZONESError
+          SZMGMT.logger.error("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} failed.")
+          cleaner.cleanup_on_failure!
+        else
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh_dest) if boot
+          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} succeeded.")
+        ensure
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh_source) if booted
+          cleaner.cleanup_temporary!
+          ssh_source.close if ssh_source
+          ssh_dest.close if ssh_dest
+        end
+      end
     end
   end
 end
