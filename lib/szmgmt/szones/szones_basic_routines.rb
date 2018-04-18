@@ -60,6 +60,102 @@ module SZMGMT
         end
         zones
       end
+
+      def self.boot_zone(zone_name, host_spec = {:host_name => 'localhost'}, *boot_opts)
+        boot_zone = SZONESBasicZoneCommands.boot_zone(zone_name, boot_opts)
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("BOOT - Boot of zone #{zone_name}:localhost initiated.")
+          boot_zone.exec
+          SZMGMT.logger.info("BOOT - Zone #{zone_name}:localhost boot finished.")
+        else
+          SZMGMT.logger.info("BOOT - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("BOOT - Boot of zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            boot_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("BOOT - Zone #{zone_name}:#{host_spec[:host_name]} boot finished.")
+          end
+        end
+      end
+
+      def self.shutdown_zone(zone_name, host_spec = {:host_name => 'localhost'})
+        shutdown_zone = SZONESBasicZoneCommands.shutdown_zone(zone_name)
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("SHUTDOWN - Shutdown zone #{zone_name}:localhost initiated.")
+          shutdown_zone.exec
+          SZMGMT.logger.info("SHUTDOWN - Zone #{zone_name}:localhost shutdown finished.")
+        else
+          SZMGMT.logger.info("SHUTDOWN - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("SHUTDOWN - Shutdown zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            shutdown_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("SHUTDOWN - Zone #{zone_name}:#{host_spec[:host_name]} shutdown finished.")
+          end
+        end
+      end
+
+      def self.halt_zone(zone_name, host_spec = {:host_name => 'localhost'})
+        halt_zone = SZONESBasicZoneCommands.halt_zone(zone_name)
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("HALT - Halt of zone #{zone_name}:localhost initiated.")
+          halt_zone.exec
+          SZMGMT.logger.info("HALT - Zone #{zone_name}:localhost halt finished.")
+        else
+          SZMGMT.logger.info("HALT - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("HALT - Halt of zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            halt_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("HALT - Zone #{zone_name}:#{host_spec[:host_name]} halt finished.")
+          end
+        end
+      end
+
+      def self.reboot_zone(zone_name, host_spec = {:host_name => 'localhost'}, *boot_opts)
+        reboot_zone = SZONESBasicZoneCommands.reboot_zone(zone_name, boot_opts)
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("REBOOT - Reboot of zone #{zone_name}:localhost initiated.")
+          reboot_zone.exec
+          SZMGMT.logger.info("REBOOT - Zone #{zone_name}:localhost reboot finished.")
+        else
+          SZMGMT.logger.info("REBOOT - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("REBOOT - Reboot of zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            reboot_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("REBOOT - Zone #{zone_name}:#{host_spec[:host_name]} reboot finished.")
+          end
+        end
+      end
+
+      def self.uninstall_zone(zone_name, host_spec = {:host_name => 'localhost'})
+        uninstall_zone = SZONESBasicZoneCommands.uninstall_zone(zone_name)
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("UNINSTALL - Uninstall of zone #{zone_name}:localhost initiated.")
+          uninstall_zone.exec
+          SZMGMT.logger.info("UNINSTALL - Zone #{zone_name}:localhost uninstall finished.")
+        else
+          SZMGMT.logger.info("UNINSTALL - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("UNINSTALL - Uninstall of zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            uninstall_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("UNINSTALL - Zone #{zone_name}:#{host_spec[:host_name]} uninstall finished.")
+          end
+        end
+      end
+
+      def self.unconfigure_zone(zone_name, host_spec = {:host_name => 'localhost'})
+        unconfigure_zone = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']})
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("UNCONFIGURE - Unconfiguration of zone #{zone_name}:localhost initiated.")
+          unconfigure_zone.exec
+          SZMGMT.logger.info("UNCONFIGURE - Zone #{zone_name}:localhost unconfiguration finished.")
+        else
+          SZMGMT.logger.info("UNCONFIGURE - Connecting to #{host_spec[:host_name]}.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            SZMGMT.logger.info("UNCONFIGURE - Unconfiguration of zone #{zone_name}:#{host_spec[:host_name]} initiated.")
+            unconfigure_zone.exec_ssh(ssh)
+            SZMGMT.logger.info("UNCONFIGURE - Zone #{zone_name}:#{host_spec[:host_name]} unconfiguration finished.")
+          end
+        end
+      end
     end
   end
 end

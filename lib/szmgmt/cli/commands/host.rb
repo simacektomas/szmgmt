@@ -43,7 +43,6 @@ module SZMGMT
           host_spec = SZMGMT::Entities::HostSpec.new(hostname)
           host_spec[:user] = options[:user]
           host_spec[:keys] = options[:keys]
-          p host_spec.to_h
           @host_manager.add_host(host_spec.to_h)
         end
 

@@ -9,7 +9,6 @@ module SZMGMT
         super(*args)
         self.class.initialize_cli
         @host_manager = CLI::HostManager.new
-        SZMGMT.logger.level = Logger::ERROR
         @szmgmt_api = SZMGMT::SZMGMTAPI.new
       end
 
