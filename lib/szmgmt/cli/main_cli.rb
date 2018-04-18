@@ -9,7 +9,7 @@ module SZMGMT
         super(*args)
         self.class.initialize_cli
         @host_manager = CLI::HostManager.new
-        SZMGMT.logger.level = Logger::INFO
+        SZMGMT.logger.level = Logger::ERROR
         @szmgmt_api = SZMGMT::SZMGMTAPI.new
       end
 
@@ -34,6 +34,26 @@ module SZMGMT
                  command.command_name,
                  command.usage,
                  command.description)
+      end
+
+      desc 'list', 'List all zones on registered hosts.'
+      def list
+        host_specs = []
+        @host_manager.load_all_hosts.each do |hostname|
+          next if hostname == 'localhost'
+          host_specs << @host_manager.load_host_spec(hostname)
+        end
+
+        zones = []
+        host_specs.each do |host_spec|
+          host_zones = SZMGMT::SZONES::SZONESBasicRoutines.list_zones(host_spec)
+          host_zones.each do |zone|
+            zone[:name] = "#{zone[:name]}:#{host_spec[:host_name]}"
+            zones << zone
+          end
+        end
+        zones += SZMGMT::SZONES::SZONESBasicRoutines.list_zones
+        tp zones, zones.first.keys
       end
 
       method_option :template,

@@ -55,7 +55,7 @@ module SZMGMT
         desc 'delete hostname', 'Delete this host from registered hosts.'
         def list
           puts 'Hosts:'
-          @host_manager.load_all_host_specs.each do |host|
+          @host_manager.load_all_hosts.each do |host|
             puts "  #{host}"
           end
         end

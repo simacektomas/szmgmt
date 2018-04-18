@@ -40,10 +40,6 @@ module SZMGMT
       private
 
       def zfs_archives_routine(host_spec, zone_names, backup_dir, archive_destination)
-        p host_spec
-        p zone_names
-        p backup_dir
-        p archive_destination
         if host_spec[:host_name] == 'localhost'
           Parallel.each(zone_names) do |zone_name|
             SZMGMT.logger.info("BACKUP:         Backuping of zone #{host_spec[:host_name]}:#{zone_name} to #{backup_dir} #{"on #{archive_destination[:host_name]}" if archive_destination} initialized...")

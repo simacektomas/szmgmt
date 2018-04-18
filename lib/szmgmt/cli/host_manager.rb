@@ -40,7 +40,7 @@ module SZMGMT
         load_host(hostname)
       end
 
-      def load_all_host_specs
+      def load_all_hosts
         specs = []
         @index.each do |hostname|
           next if hostname == 'localhost'
