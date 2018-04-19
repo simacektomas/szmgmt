@@ -95,15 +95,51 @@ module SZMGMT
       method_option :destination,
                     aliases: ['-d'],
                     type: :string,
+                    default: 'localhost',
                     desc: 'Hostname that is final destination of migrated zones.'
 
       method_option :type,
                     aliases: ['-t'],
                     enum: %w{d z u},
+                    default: 'z',
                     desc: 'Type of migration to use. Types are d = direct, z = zfs archive, u = unified archive.'
 
       desc 'migrate [ZONE_ID, ...]', 'Migrate zones specified by zone id to specified host.'
       def migrate(*zone_identifiers)
+        if options[:destination] == 'localhost'
+          dest_host_spec = SZMGMT::Entities::HostSpec.new(Socket.gethostname).to_h
+        else
+          dest_host_spec = @host_manager.load_host_spec(options[:destination])
+          unless dest_host_spec
+            SZMGMT.logger.warn("Using default host_spec values for destination #{options[:destination]}")
+            dest_host_spec = SZMGMT::Entities::HostSpec.new(options[:destination]).to_h
+          end
+        end
+        migrator = ZoneMigrator.new(dest_host_spec)
+        zone_identifiers.each do |zone_id|
+          zone_name, hostname = zone_id.split(':')
+          if hostname
+            host_spec = @host_manager.load_host_spec(hostname)
+            # Create default spec for this host
+            unless host_spec
+              SZMGMT.logger.warn("Using default host_spec values for host #{hostname}")
+              host_spec = SZMGMT::Entities::HostSpec.new(hostname).to_h
+            end
+            migrator.add_zone(zone_name, host_spec)
+          else
+            migrator.add_zone(zone_name)
+          end
+        end
+        case options[:type]
+        when 'd'
+          migrator.migrate_directly
+        when 'z'
+          migrator.migrate_zfs
+        when 'u'
+          migrator.migrate_uar
+        else
+          SZMGMT.logger.error("Invalid type of migration type")
+        end
 
       end
 
@@ -138,8 +174,10 @@ module SZMGMT
               SZMGMT.logger.warn("Using default host_spec values for host #{hostname}")
               host_spec = SZMGMT::Entities::HostSpec.new(hostname).to_h
             end
+            backuper.add_zone_to_backup(zone_name, host_spec)
+          else
+            backuper.add_zone_to_backup(zone_name)
           end
-          backuper.add_zone_to_backup(zone_name, host_spec)
         end
         dest_hostname = options[:destination]
         if dest_hostname
@@ -153,7 +191,7 @@ module SZMGMT
         if options[:type] == 'zfs'
           backuper.backup_using_zfs_archives(options[:path], archive_destination)
         else
-          backuper.backup_using_zfs_archives(options[:path], archive_destination)
+          backuper.backup_using_uar(options[:path], archive_destination)
         end
       end
     end

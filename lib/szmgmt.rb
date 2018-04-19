@@ -4,6 +4,8 @@ require 'json-schema'
 require 'open3'
 require 'net/ssh'
 require 'parallel'
+require 'table_print'
+require 'socket'
 require 'logger'
 
 require 'szmgmt/entities'
