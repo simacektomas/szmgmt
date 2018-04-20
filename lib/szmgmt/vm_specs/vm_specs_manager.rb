@@ -13,9 +13,7 @@ module SZMGMT
         module_name = vm_spec['type'].upcase
         begin
           mod = SZMGMT.const_get("#{module_name}")
-          p mod
           advanecd_manager = mod.request_handler
-          p advanecd_manager
           advanecd_manager.send("validate_#{module_name.downcase}_vm_spec", path_to_spec, full_validation, vm_spec)
         rescue NoMethodError
           raise Exceptions::ModuleInvalidInterfaceError.new(module_name, 'validate_vm_spec')

@@ -158,13 +158,12 @@ module SZMGMT
       end
 
       def self.remove_zone(zone_name, ssh = nil)
-        # Chekc if the zone exists
+        # Check if the zone exists
         begin
           halt = SZONESBasicZoneCommands.halt_zone(zone_name)
           ssh ? halt.exec_ssh(ssh) : halt.exec
         rescue Exceptions:: SZONESError
           # Zone does not exists
-          return true
         end
         begin
           uninstall = SZONESBasicZoneCommands.uninstall_zone(zone_name, {:force => true})
@@ -172,8 +171,12 @@ module SZMGMT
         rescue Exceptions:: SZONESError
           # Zone already in state configured
         end
-        unconfigure = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']})
-        ssh ? unconfigure.exec_ssh(ssh) : unconfigure.exec
+        begin
+          unconfigure = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ['delete -F']})
+          ssh ? unconfigure.exec_ssh(ssh) : unconfigure.exec
+        rescue Exceptions:: SZONESError
+
+        end
         true
       end
     end

@@ -194,10 +194,25 @@ module SZMGMT
         id                  = SZONESUtils.transaction_id
         random_id           = SZONESUtils.random_id
         tmp_dir             = opts[:tmp_dir] || '/var/tmp/'
-        files_to_copy       = [path_to_zonecfg, path_to_profile, path_to_manifest]
+        routine_options     = {
+            :id => id,
+            :cleaner => cleaner
+        }
         dest_zonecfg        = File.join(tmp_dir, "#{random_id}_#{path_to_zonecfg.split('/').last}")
-        dest_manifest       = File.join(tmp_dir, "#{random_id}_#{path_to_manifest.split('/').last}")
-        dest_profile        = File.join(tmp_dir, "#{random_id}_#{path_to_profile.split('/').last}")
+        files_to_copy       = [path_to_zonecfg]
+        dest_files          = [dest_zonecfg]
+        if path_to_manifest
+          dest_manifest       = File.join(tmp_dir, "#{random_id}_#{path_to_manifest.split('/').last}")
+          files_to_copy << path_to_manifest
+          dest_files << dest_manifest
+          routine_options[:path_to_manifest] = dest_manifest
+        end
+        if path_to_profile
+          dest_profile        = File.join(tmp_dir, "#{random_id}_#{path_to_profile.split('/').last}")
+          files_to_copy << path_to_profile
+          dest_files << path_to_profile
+          routine_options[:path_to_profile] = dest_profile
+        end
         ##########
         # EXECUTION
         SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on host #{dest_host_spec[:host_name]} has been initialize...")
@@ -207,10 +222,11 @@ module SZMGMT
           # EXECUTED ON LOCALHOST
           #
           # Copy files on remote server
-
           if copy
             SZMGMT.logger.info("DEPLOY (#{id}) -      Copying files #{files_to_copy.join(', ')} to directory #{dest_host_spec[:host_name]}:#{tmp_dir}...")
-            SZONESBasicCommands.copy_files_on_remote_host(files_to_copy, dest_host_spec, tmp_dir).exec
+            files_to_copy.each_with_index do |file, index|
+              SZONESBasicCommands.copy_files_on_remote_host(file, dest_host_spec, dest_files[index]).exec
+            end
             SZMGMT.logger.info("DEPLOY (#{id}) -      Copying finished.")
             # Add files to cleaner to be able to delete it after transaction
             # is finished
@@ -224,16 +240,7 @@ module SZMGMT
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to remote host #{dest_host_spec[:host_name]}...")
           Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h) do |ssh|
             SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
-            SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
-                                                               dest_zonecfg,
-                                                               {
-                                                                   :id => id,
-                                                                   :path_to_manifest => dest_manifest,
-                                                                   :path_to_profile => dest_profile,
-                                                                   :cleaner => cleaner
-                                                               },
-                                                               ssh,
-                                                               dest_host_spec)
+            SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name, dest_zonecfg, routine_options, ssh, dest_host_spec)
           end
           SZMGMT.logger.info("DEPLOY (#{id}) -      Closing connection to remote host #{dest_host_spec[:host_name]}...")
         rescue  Exceptions::SZONESError
@@ -404,6 +411,7 @@ module SZMGMT
         # OPTIONS
         force               = opts[:force] || false
         boot                = opts[:boot] || false
+        halt                = opts[:halt] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end
@@ -416,10 +424,12 @@ module SZMGMT
         SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} from zone #{source_zone_name} has been initialize...")
         SZMGMT.logger.info("DEPLOY (#{id}) -      type: clone")
         begin
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
-          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
-          booted = true unless halt.stderr =~ /already halted/
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          if halt
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+            halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
+            booted = true unless halt.stderr =~ /already halted/
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          end
           SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
                                                                   source_zone_name,
@@ -433,11 +443,11 @@ module SZMGMT
           cleaner.cleanup_on_failure!
           status = false
         else
-          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
+          SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
           status = true
         ensure
-          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}) if halt && booted
           cleaner.cleanup_temporary!
         end
         status
@@ -452,6 +462,7 @@ module SZMGMT
         # OPTIONS
         force               = opts[:force] || false
         boot                = opts[:boot] || false
+        halt                = opts[:halt] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end
@@ -464,10 +475,12 @@ module SZMGMT
         begin
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
           ssh = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
-          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
-          booted = true unless halt.stderr =~ /already halted/
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          if halt
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+            halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
+            booted = true unless halt.stderr =~ /already halted/
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          end
           SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
           SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
                                                                   source_zone_name,
@@ -487,7 +500,7 @@ module SZMGMT
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
           status = true
         ensure
-          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if halt && booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
@@ -503,6 +516,7 @@ module SZMGMT
         # OPTIONS
         force               = opts[:force] || false
         boot                = opts[:boot] || false
+        halt                = opts[:halt] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end
@@ -516,10 +530,12 @@ module SZMGMT
         begin
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{source_host_spec[:host_name]}...")
           ssh = Net::SSH.start(source_host_spec[:host_name], source_host_spec[:user], source_host_spec.to_h)
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
-          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
-          booted = true unless halt.stderr =~ /already halted/
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          if halt
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name}...")
+            halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
+            booted = true unless halt.stderr =~ /already halted/
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          end
           path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_zfs_archive(source_zone_name,
                                                                                                     {:id => id, :cleaner => cleaner}.merge(opts), ssh,
                                                                                                     source_host_spec )
@@ -535,9 +551,9 @@ module SZMGMT
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
-          statis = true
+          status = true
         ensure
-          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if halt && booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
@@ -553,6 +569,7 @@ module SZMGMT
         # OPTIONS
         force               = opts[:force] || false
         boot                = opts[:boot] || false
+        halt                = opts[:halt] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end
@@ -563,10 +580,12 @@ module SZMGMT
         SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} from zone '#{source_zone_name}' has been initialize...")
         SZMGMT.logger.info("DEPLOY (#{id}) -      type: ZFS archive")
         begin
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{}...")
-          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
-          booted = true unless halt.stderr =~ /already halted/
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on localhost halted.")
+          if halt
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{}...")
+            halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
+            booted = true unless halt.stderr =~ /already halted/
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on localhost halted.")
+          end
           path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_remote_zfs_archive(source_zone_name, dest_host_spec,
                                                                                                            {:id => id, :cleaner => cleaner}.merge(opts))
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
@@ -584,7 +603,7 @@ module SZMGMT
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
           status = true
         ensure
-          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}) if booted
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}) if halt && booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
@@ -600,6 +619,7 @@ module SZMGMT
         # OPTIONS
         force               = opts[:force] || false
         boot                = opts[:boot] || false
+        halt                = opts[:halt] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end
@@ -612,10 +632,12 @@ module SZMGMT
         begin
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{source_host_spec[:host_name]}...")
           ssh_source = Net::SSH.start(source_host_spec[:host_name], source_host_spec[:user], source_host_spec.to_h)
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name} on  host #{source_host_spec[:host_name]}...")
-          halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh_source)
-          booted = true unless halt.stderr =~ /already halted/
-          SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on host #{source_host_spec[:host_name]} halted.")
+          if halt
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Trying to halt the source zone #{source_zone_name} on  host #{source_host_spec[:host_name]}...")
+            halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh_source)
+            booted = true unless halt.stderr =~ /already halted/
+            SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} on host #{source_host_spec[:host_name]} halted.")
+          end
           path_to_archive, path_to_zonecfg = SZONESDeploymentSubroutines.export_zone_to_remote_zfs_archive(source_zone_name, dest_host_spec,
                                                                                                            {:id => id, :cleaner => cleaner}.merge(opts),
                                                                                                            ssh_source, source_host_spec)
@@ -634,7 +656,7 @@ module SZMGMT
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} succeeded.")
           status = true
         ensure
-          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh_source) if booted
+          SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh_source) if halt && booted
           cleaner.cleanup_temporary!
           ssh_source.close if ssh_source
           ssh_dest.close if ssh_dest

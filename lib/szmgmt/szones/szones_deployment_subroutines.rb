@@ -10,6 +10,18 @@ module SZMGMT
         ssh ? configure.exec_ssh(ssh) : configure.exec
         cleaner.add_persistent_zone_configuration(zone_name, host_spec)
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Configuration of zone #{zone_name} created.")
+        # Testing zonepath
+        zonecfg = SZONESBasicZoneCommands.configure_zone(zone_name, { :commands => ['info zonepath'] })
+        ssh ? zonecfg.exec_ssh(ssh) : zonecfg.exec
+        # Parse output of zonecfg command in step 1) that should
+        # return zonepath in format 'zonepath: /system/zones/Test\n'
+        zonepath = zonecfg.stdout.chomp("\n").split(' ').last
+        if zonepath.split('/').last != zone_name
+          tokens = zonepath.split('/')
+          tokens[-1] = zone_name
+          opts[:zonepath] = tokens.join('/') unless opts[:zonepath]
+        end
+
         if opts[:zonepath]
           SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Adjusting the zonepath of zone #{zone_name}...")
           adjust = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ["set zonepath=#{opts[:zonepath]}"]})
@@ -20,8 +32,10 @@ module SZMGMT
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -           manifest: #{opts[:path_to_manifest]}") if opts[:path_to_manifest]
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -            profile: #{opts[:path_to_profile]}") if opts[:path_to_profile]
         cleaner.add_persistent_zone_installation(zone_name, host_spec)
-        install = SZONESBasicZoneCommands.install_zone(zone_name, {:path_to_manifest => opts[:path_to_manifest],
-                                                                   :path_to_profile => opts[:path_to_profile] })
+        options = {}
+        options[:path_to_manifest] = opts[:path_to_manifest] if opts[:path_to_manifest]
+        options[:path_to_profile] = opts[:path_to_profile] if opts[:path_to_profile]
+        install = SZONESBasicZoneCommands.install_zone(zone_name, options)
         ssh ? install.exec_ssh(ssh) : install.exec
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Installation of zone #{zone_name} finished.")
       end
@@ -33,6 +47,18 @@ module SZMGMT
         configure = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ["create -t #{source_zone_name}"]})
         ssh ? configure.exec_ssh(ssh) : configure.exec
         cleaner.add_persistent_zone_configuration(zone_name, host_spec)
+        # Testing zonepath
+        zonecfg = SZONESBasicZoneCommands.configure_zone(zone_name, { :commands => ['info zonepath'] })
+        ssh ? zonecfg.exec_ssh(ssh) : zonecfg.exec
+        # Parse output of zonecfg command in step 1) that should
+        # return zonepath in format 'zonepath: /system/zones/Test\n'
+        zonepath = zonecfg.stdout.chomp("\n").split(' ').last
+        if zonepath.split('/').last != zone_name
+          tokens = zonepath.split('/')
+          tokens[-1] = zone_name
+          opts[:zonepath] = tokens.join('/') unless opts[:zonepath]
+        end
+
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Configuration of zone #{zone_name} created.")
         if opts[:zonepath]
           SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Adjusting the zonepath of zone #{zone_name}...")
@@ -78,6 +104,18 @@ module SZMGMT
         ssh ? configure.exec_ssh(ssh) : configure.exec
         cleaner.add_persistent_zone_configuration(zone_name, host_spec)
         SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Configuration of zone #{zone_name} created.")
+        # Testing zonepath
+        zonecfg = SZONESBasicZoneCommands.configure_zone(zone_name, { :commands => ['info zonepath'] })
+        ssh ? zonecfg.exec_ssh(ssh) : zonecfg.exec
+        # Parse output of zonecfg command in step 1) that should
+        # return zonepath in format 'zonepath: /system/zones/Test\n'
+        zonepath = zonecfg.stdout.chomp("\n").split(' ').last
+        if zonepath.split('/').last != zone_name
+          tokens = zonepath.split('/')
+          tokens[-1] = zone_name
+          opts[:zonepath] = tokens.join('/') unless opts[:zonepath]
+        end
+
         if opts[:zonepath]
           SZMGMT.logger.info("DEPLOY (#{opts[:id]}) -      Adjusting the zonepath of zone #{zone_name}...")
           adjust = SZONESBasicZoneCommands.configure_zone(zone_name, {:commands => ["set zonepath=#{opts[:zonepath]}"]})
