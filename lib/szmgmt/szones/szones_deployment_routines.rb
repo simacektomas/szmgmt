@@ -25,6 +25,7 @@ module SZMGMT
         boot                = opts[:boot] || false
         path_to_manifest    = opts[:path_to_manifest]
         path_to_profile     = opts[:path_to_profile]
+        force               = opts[:force] || false
         ##########
         # PREPARATION
         cleaner             = SZONESCleanuper.new
@@ -34,6 +35,7 @@ module SZMGMT
         SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on localhost has been initialize...")
         SZMGMT.logger.info("DEPLOY (#{id}) -      type: FILES")
         begin
+          SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
                                                              path_to_zonecfg,
                                                              {
@@ -45,6 +47,7 @@ module SZMGMT
         rescue  Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} succeeded.")
           if boot
@@ -52,9 +55,11 @@ module SZMGMT
             SZONESBasicZoneCommands.boot_zone(zone_name).exec
             SZMGMT.logger.info("DEPLOY (#{id}) - Zone #{zone_name} booted.")
           end
+          status = true
         ensure
           cleaner.cleanup_temporary!
         end
+        status
       end
       # Routine for deploying TEMPLATE from configuration files. Frist file
       # is zone command file that can be exported from zonecfg command.
@@ -88,6 +93,7 @@ module SZMGMT
         # OPTIONS
         boot                = opts[:boot] || false
         tmp_dir             = opts[:tmp_dir] || '/var/tmp/'
+        force               = opts[:force] || false
         ##########
         # PREPARATION
         cleaner             = SZONESCleanuper.new
@@ -119,6 +125,7 @@ module SZMGMT
         SZMGMT.logger.info("DEPLOY (#{id}) -      type: VM_SPEC")
         SZMGMT.logger.info("DEPLOY (#{id}) -   vm_spec: #{vm_spec['name']}")
         begin
+          SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
                                                              path_to_zonecfg,
                                                              {
@@ -130,6 +137,7 @@ module SZMGMT
         rescue  Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
           if boot
@@ -137,9 +145,11 @@ module SZMGMT
             SZONESBasicZoneCommands.boot_zone(zone_name).exec
             SZMGMT.logger.info("DEPLOY (#{id}) - Zone #{zone_name} booted.")
           end
+          status = true
         ensure
           cleaner.cleanup_temporary!
         end
+        status
       end
       # Routine for deploying TEMPLATE from vm_spec. This object is composition
       # of all needed configuration files as zonecfg, manifest and profile. So
@@ -177,6 +187,7 @@ module SZMGMT
         boot                = opts[:boot] || false
         path_to_manifest    = opts[:path_to_manifest]
         path_to_profile     = opts[:path_to_profile]
+        force               = opts[:force] || force
         ##########
         # PREPARATION
         cleaner             = SZONESCleanuper.new
@@ -212,6 +223,7 @@ module SZMGMT
           #
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to remote host #{dest_host_spec[:host_name]}...")
           Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h) do |ssh|
+            SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
             SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
                                                                dest_zonecfg,
                                                                {
@@ -227,6 +239,7 @@ module SZMGMT
         rescue  Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           if boot
             SZMGMT.logger.info("DEPLOY (#{id}) -      Booting up zone #{zone_name}")
@@ -234,9 +247,11 @@ module SZMGMT
             SZMGMT.logger.info("DEPLOY (#{id}) -      Zone #{zone_name} booted.")
           end
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} succeeded.")
+          status = true
         ensure
           cleaner.cleanup_temporary!
         end
+        status
       end
       # Routine for deploying TEMPLATE from files on remote server. This object is composition
       # of all needed configuration files as zonecfg, manifest and profile. So
@@ -275,6 +290,7 @@ module SZMGMT
         copy                = opts[:copy] || true
         boot                = opts[:boot] || false
         tmp_dir             = opts[:tmp_dir] || '/var/tmp/'
+        force               = opts[:force] || false
         ##########
         # PREPARATION
         cleaner             = SZONESCleanuper.new
@@ -330,6 +346,7 @@ module SZMGMT
           #
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to remote host #{dest_host_spec[:host_name]}...")
           Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h) do |ssh|
+            SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
             SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
                                                                path_to_zonecfg,
                                                                {
@@ -345,6 +362,7 @@ module SZMGMT
         rescue  Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           if boot
             SZMGMT.logger.info("DEPLOY (#{id}) -      Booting up zone #{zone_name}")
@@ -352,9 +370,11 @@ module SZMGMT
             SZMGMT.logger.info("DEPLOY (#{id}) -      Zone #{zone_name} booted.")
           end
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} succeeded.")
+          status = true
         ensure
           cleaner.cleanup_temporary!
         end
+        status
       end
       # Routine for deploying TEMPLATE from VM_SPEC on remote server. This object is composition
       # of all needed configuration files as zonecfg, manifest and profile. So
@@ -382,6 +402,7 @@ module SZMGMT
       def self.deploy_zone_from_zone(zone_name, source_zone_name, opts = {})
         ##########
         # OPTIONS
+        force               = opts[:force] || false
         boot                = opts[:boot] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
@@ -399,6 +420,7 @@ module SZMGMT
           halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec
           booted = true unless halt.stderr =~ /already halted/
           SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
                                                                   source_zone_name,
                                                                   {
@@ -409,13 +431,16 @@ module SZMGMT
         rescue Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+          status = true
         ensure
           SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
           cleaner.cleanup_temporary!
         end
+        status
       end
       #
       #
@@ -425,6 +450,7 @@ module SZMGMT
       def self.rdeploy_zone_from_zone(zone_name, dest_host_spec, source_zone_name, opts = {})
         ##########
         # OPTIONS
+        force               = opts[:force] || false
         boot                = opts[:boot] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
@@ -442,6 +468,7 @@ module SZMGMT
           halt = SZONESBasicZoneCommands.halt_zone(source_zone_name).exec_ssh(ssh)
           booted = true unless halt.stderr =~ /already halted/
           SZMGMT.logger.info("DEPLOY (#{id}) -      Source zone #{source_zone_name} halted.")
+          SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
           SZONESDeploymentSubroutines.deploy_zone_from_local_zone(zone_name,
                                                                   source_zone_name,
                                                                   {
@@ -454,14 +481,17 @@ module SZMGMT
         rescue Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+          status = true
         ensure
           SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
+        status
       end
       #
       #
@@ -471,6 +501,7 @@ module SZMGMT
       def self.deploy_zone_from_rzone(zone_name, source_host_spec, source_zone_name, opts = {})
         ##########
         # OPTIONS
+        force               = opts[:force] || false
         boot                = opts[:boot] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
@@ -493,20 +524,24 @@ module SZMGMT
                                                                                                     {:id => id, :cleaner => cleaner}.merge(opts), ssh,
                                                                                                     source_host_spec )
           SZONESBasicCommands.copy_files_from_remote_host([path_to_archive, path_to_zonecfg], source_host_spec, tmp_dir).exec
+          SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
                                                                    { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts))
 
         rescue Exceptions::SZONESError
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+          statis = true
         ensure
           SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh) if booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
+        status
       end
       #
       #
@@ -516,6 +551,7 @@ module SZMGMT
       def self.deploy_rzone_from_zone(zone_name, dest_host_spec, source_zone_name, opts = {})
         ##########
         # OPTIONS
+        force               = opts[:force] || false
         boot                = opts[:boot] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
@@ -535,20 +571,24 @@ module SZMGMT
                                                                                                            {:id => id, :cleaner => cleaner}.merge(opts))
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
           ssh = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
+          SZONESBasicRoutines.remove_zone(zone_name, ssh) if force
           SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
                                                                    { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts),
                                                                    ssh, dest_host_spec)
         rescue Exceptions::SZONESError
           SZMGMT.logger.error("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} succeeded.")
+          status = true
         ensure
           SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}) if booted
           cleaner.cleanup_temporary!
           ssh.close if ssh
         end
+        status
       end
       #
       #
@@ -558,6 +598,7 @@ module SZMGMT
       def self.deploy_rzone_from_rzone(zone_name, dest_host_spec, source_zone_name, source_host_spec, opts = {})
         ##########
         # OPTIONS
+        force               = opts[:force] || false
         boot                = opts[:boot] || false
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
@@ -580,21 +621,25 @@ module SZMGMT
                                                                                                            ssh_source, source_host_spec)
           SZMGMT.logger.info("DEPLOY (#{id}) -      Connecting to host #{dest_host_spec[:host_name]}...")
           ssh_dest = Net::SSH.start(dest_host_spec[:host_name], dest_host_spec[:user], dest_host_spec.to_h)
+          SZONESBasicRoutines.remove_zone(zone_name, ssh_dest) if force
           SZONESDeploymentSubroutines.deploy_zone_from_zfs_archive(zone_name, path_to_archive, path_to_zonecfg,
                                                                    { :id => id, :cleaner => cleaner, :zonepath => zonepath}.merge(opts),
                                                                    ssh_dest, dest_host_spec)
         rescue Exceptions::SZONESError
           SZMGMT.logger.error("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} failed.")
           cleaner.cleanup_on_failure!
+          status = false
         else
           SZONESDeploymentSubroutines.boot_zone(zone_name, {:id => id}, ssh_dest) if boot
           SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on #{dest_host_spec[:host_name]} succeeded.")
+          status = true
         ensure
           SZONESDeploymentSubroutines.boot_zone(source_zone_name, {:id => id}, ssh_source) if booted
           cleaner.cleanup_temporary!
           ssh_source.close if ssh_source
           ssh_dest.close if ssh_dest
         end
+        status
       end
     end
   end
