@@ -1,0 +1,1 @@
+require 'szmgmt/gui/spec_editor'

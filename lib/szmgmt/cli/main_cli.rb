@@ -40,6 +40,11 @@ module SZMGMT
                  command.description)
       end
 
+      desc 'editor', 'Editor for virtual machine specification'
+      def editor
+        SZMGMT::GUI::SpecEditor.new
+      end
+
       desc 'list', 'List all zones on registered hosts.'
       def list
         host_specs = []

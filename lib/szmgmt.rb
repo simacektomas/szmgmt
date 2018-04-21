@@ -13,6 +13,7 @@ require 'szmgmt/exceptions'
 require 'szmgmt/vm_specs'
 require 'szmgmt/szones'
 require 'szmgmt/cli'
+require 'szmgmt/gui'
 
 require 'szmgmt/configuration'
 require 'szmgmt/connection_spec_builder'
