@@ -1,0 +1,1 @@
+require 'szmgmt/gui/crypto/hash_generator'
