@@ -7,6 +7,7 @@ import javax.swing.JPanel
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
 import javax.swing.JTextField
+import javax.swing.JDialog
 import javax.swing.JMenu
 import javax.swing.JLabel
 import java.lang.System
@@ -22,6 +23,7 @@ import javax.swing.BorderFactory
 import javax.swing.JScrollPane
 import javax.swing.JPasswordField
 
+require 'szmgmt/gui/gui'
 require 'szmgmt/gui/admin_resource'
 require 'szmgmt/gui/anet_resource'
 require 'szmgmt/gui/autoboot_config'
@@ -38,5 +40,6 @@ require 'szmgmt/gui/root_profile'
 require 'szmgmt/gui/timezone_profile'
 require 'szmgmt/gui/user_profile'
 require 'szmgmt/gui/zonepath_config'
+require 'szmgmt/gui/interactive_install'
 require 'szmgmt/gui/spec_editor'
 require 'szmgmt/gui/crypto'

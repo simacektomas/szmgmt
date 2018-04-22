@@ -1,11 +1,12 @@
 module SZMGMT
   module Entities
-    class HostSpec <  Struct.new(:host_name, :user, :keys, :non_interactive)
+    class HostSpec <  Struct.new(:host_name, :user, :keys, :non_interactive, :timeout)
 
       DEFAULT_OPTIONS = {
           :user => ENV['USER'],
           :keys => [ '~/.ssh/id_rsa' ],
-          :non_interactive => true
+          :non_interactive => true,
+          :timeout => 1000
       }
 
       def initialize(hostname, options = {})

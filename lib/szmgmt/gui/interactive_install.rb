@@ -1,12 +1,16 @@
 module SZMGMT
   module GUI
-    class SpecEditor < JDialog
+    class InteractiveInstall < JDialog
+
+      attr_accessor :saved, :specification
+
       def initialize(szmgmt_api)
-        super(nil, 'Virtual machine specification editor')
-        self.initialize_gui
-        @loaded = false
-        @loaded_vm_spec
+        super(nil, 'Interactive installation')
+        @loaded_vm_spec = DEFAULT_VM_SPEC
+        @saved = false
+        @specification = ''
         @api = szmgmt_api
+        self.initialize_gui
         self.setModal(true);
       end
 
@@ -14,53 +18,10 @@ module SZMGMT
         @scene = self.getContentPane
         @scene.setLayout BorderLayout.new
 
-        @menu = JMenuBar.new
-        file_menu = JMenu.new "File"
-        item_new = JMenuItem.new 'New specification'
-        item_new.addActionListener do |e|
-          @loaded_vm_spec = DEFAULT_VM_SPEC
-          @loaded = true
-          initialize_editor
-        end
-        item_open = JMenuItem.new 'Open specification'
-        item_open.addActionListener do |e|
-
-          spec_chooser = JFileChooser.new
-          ret = spec_chooser.showOpenDialog self
-          if ret == JFileChooser::APPROVE_OPTION
-            selectedFile = spec_chooser.getSelectedFile();
-            path = selectedFile.getAbsolutePath();
-
-            @loaded_vm_spec = @api.load_vm_spec path
-            @loaded = true
-            initialize_editor
-          else
-            JOptionPane.showMessageDialog(self,
-                                          "You didn't choose a virtual machine specification file.",
-                                          "Warning",
-                                          JOptionPane::WARNING_MESSAGE)
-          end
-        end
-        item_exit = JMenuItem.new "Exit"
-        item_exit.addActionListener do |e|
-          System.exit 0
-        end
-
-        file_menu.add item_new
-        file_menu.add item_open
-        file_menu.add item_exit
-        @menu.add file_menu
-        self.setJMenuBar @menu
-
-        @info = JPanel.new
-        @info.setLayout BoxLayout.new @info, BoxLayout::X_AXIS
-        @info.add JLabel.new("Welcome #{ENV['USER']} to virtual machine specification editor.")
-
-        @scene.add @info, BorderLayout::PAGE_START
-
         self.setDefaultCloseOperation JDialog::DISPOSE_ON_CLOSE
         self.setSize 250, 200
         self.setLocationRelativeTo nil
+        initialize_editor
         self.pack
       end
 
@@ -136,38 +97,20 @@ module SZMGMT
                                           JOptionPane::WARNING_MESSAGE)
           end
         end
-        @save_btn = JButton.new 'Save specification'
-        @save_btn.addActionListener do |e|
+        @continue_btn = JButton.new 'Continue installation'
+        @continue_btn.addActionListener do |e|
           vm_spec = get_specification
-          spec_name = JOptionPane.showInputDialog("Specification name: ");
-          return unless spec_name
-          vm_spec['name'] = spec_name
-
-          spec_chooser = JFileChooser.new
-          spec_chooser.setCurrentDirectory(java.io.File.new("~/"))
-          spec_chooser.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
-          ret = spec_chooser.showOpenDialog self
-          if ret == JFileChooser::APPROVE_OPTION
-            selectedFile = spec_chooser.getSelectedFile();
-            path = selectedFile.getAbsolutePath();
-            file_path = File.join(path, "#{spec_name}.json")
-            if File.exist?(file_path)
-              choice = JOptionPane.showConfirmDialog(self,
-                                                     "File #{file_path} exists.\nDo you want to overwrite it ?",
-                                                     "Warning",
-                                                     JOptionPane::YES_NO_OPTION,
-                                                     JOptionPane::QUESTION_MESSAGE)
-              return if choice == 1
-            end
-            File.open(file_path,"w") do |file|
-              file.write(JSON.pretty_generate(vm_spec))
-            end
-            @scene.removeAll()
-            self.pack
+          tmp_dir = '/tmp'
+          file_path = File.join(tmp_dir, "specification_#{rand(36**5).to_s(36)}.json")
+          File.open(file_path,"w") do |file|
+            file.write(JSON.pretty_generate(vm_spec))
           end
+          @saved = true
+          @specification = file_path
+          self.dispose()
         end
         @controll.add @validate_btn
-        @controll.add @save_btn
+        @controll.add @continue_btn
 
         @scene.add @controll, BorderLayout::PAGE_END
         @scene.add @scroll_panel, BorderLayout::CENTER
@@ -474,4 +417,3 @@ module SZMGMT
     end
   end
 end
-

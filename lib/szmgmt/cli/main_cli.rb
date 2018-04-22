@@ -42,7 +42,7 @@ module SZMGMT
 
       desc 'editor', 'Editor for virtual machine specification'
       def editor
-        SZMGMT::GUI::SpecEditor.new
+        SZMGMT::GUI::SpecEditor.new(@szmgmt_api)
       end
 
       desc 'list', 'List all zones on registered hosts.'
@@ -116,7 +116,15 @@ module SZMGMT
         deployer = ZoneDeployer.new(@szmgmt_api)
         parse_zone_identifiers(deployer, *zone_identifiers)
         if options[:interactive]
+          if RUBY_PLATFORM =~ /java/
+            interactive_install = SZMGMT::GUI::InteractiveInstall.new @szmgmt_api
+            if interactive_install.saved
+              deployer.deploy_from_spec(interactive_install.specification,
+                                        {:force => options[:force], :boot => options[:boot]})
+            end
+          else
 
+          end
         elsif options[:template]
 
         elsif options[:zone]
@@ -144,7 +152,16 @@ module SZMGMT
                                      options[:profile],
                                     {:force => options[:force], :boot => options[:boot]})
         else
+          if RUBY_PLATFORM =~ /java/
+            interactive_install = SZMGMT::GUI::InteractiveInstall.new @szmgmt_api
+            interactive_install.setVisible true
+            if interactive_install.saved
+              deployer.deploy_from_spec(interactive_install.specification,
+                                        {:force => options[:force], :boot => options[:boot]})
+            end
+          else
 
+          end
         end
       end
 
