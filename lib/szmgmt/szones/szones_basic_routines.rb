@@ -33,6 +33,20 @@ module SZMGMT
         zfs_list.stdout.chomp("\n")
       end
 
+      def self.list_zone(zone_name, host_spec = {:host_name => 'localhost'})
+        list = SZONESBasicZoneCommands.list_zones({:zone => zone_name, :parse => true})
+        if host_spec[:host_name] == 'localhost'
+          SZMGMT.logger.info("LIST - Listing zones on localhost.")
+          list.exec
+        else
+          SZMGMT.logger.info("LIST - Connection to #{host_spec[:host_name]} to list zones.")
+          Net::SSH.start(host_spec[:host_name], host_spec[:user], host_spec.to_h) do |ssh|
+            list.exec_ssh(ssh)
+          end
+        end
+        list.stdout.chomp("\n")
+      end
+
       def self.list_zones(host_spec = {:host_name => 'localhost'})
         list = SZONESBasicZoneCommands.list_zones({:installed => true, :configured => true, :parse => true})
         if host_spec[:host_name] == 'localhost'
@@ -44,21 +58,7 @@ module SZMGMT
             list.exec_ssh(ssh)
           end
         end
-        zones = []
-        #Parse output
-        list.stdout.each_line do |zone|
-          zone_hash = {}
-          properties = zone.split(':')
-          #zone_hash[:id] = properties[0]
-          zone_hash[:name] = properties[1]
-          zone_hash[:state] = properties[2]
-          zone_hash[:zonepath] = properties[3]
-          #zone_hash[:uid] = properties[4]
-          zone_hash[:brand] = properties[5]
-          zone_hash[:ip] = properties[6]
-          zones << zone_hash
-        end
-        zones
+        list.stdout.chomp("\n")
       end
 
       def self.boot_zone(zone_name, host_spec = {:host_name => 'localhost'}, *boot_opts)

@@ -1,20 +1,17 @@
 module SZMGMT
   module CLI
     class MainCLI < Thor
-      @@configuration = {
-          :root_dir => File.join(ENV['HOME'], '.szmgmt')
-      }
-
       def initialize(*args)
         super(*args)
         self.class.initialize_cli
         @host_manager = CLI::HostManager.new
+        @zone_tracker = CLI::ZoneTracker.new
         @szmgmt_api = SZMGMT::SZMGMTAPI.new
       end
 
       def self.initialize_cli
         # Initialize directory
-        Dir.mkdir(@@configuration[:root_dir]) unless File.exists?(@@configuration[:root_dir])
+        Dir.mkdir(CLI.configuration[:root_dir]) unless File.exists?(CLI.configuration[:root_dir])
       end
 
       class_option :verbose,

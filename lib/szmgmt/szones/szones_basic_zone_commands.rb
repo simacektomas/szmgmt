@@ -148,10 +148,11 @@ module SZMGMT
       # list installed zones and list configured zones. Than you can specify
       # output for better parsing by parse option.
       def self.list_zones(opts = {})
-        installed = opts[:installed] || true
-        configured = opts[:configured] || true
-        parse = opts[:parse] || true
-        Command.new("/usr/sbin/zoneadm list #{"-i" if installed} #{"-c" if configured} #{"-p" if parse}",
+        installed = opts[:installed] || false
+        configured = opts[:configured] || false
+        zone = opts[:zone]
+        parse = opts[:parse] || false
+        Command.new("/usr/sbin/zoneadm #{"-z #{zone}" if zone} list #{"-i" if installed} #{"-c" if configured} #{"-p" if parse}",
                     SZONESErrorHandlers.zoneadm_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
       end

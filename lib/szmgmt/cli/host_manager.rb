@@ -1,21 +1,13 @@
 module SZMGMT
   module CLI
     class HostManager
-
-      @@configuration = {
-          :root_dir => File.join(ENV['HOME'], '.szmgmt'),
-          :index => 'hosts.json',
-          :specs_dir => 'hosts'
-      }
-
       @@default_index = [
         'localhost'
       ]
 
-
       def initialize
-        @specs_dir = File.join(@@configuration[:root_dir],  @@configuration[:specs_dir])
-        @index_path = File.join(@specs_dir, @@configuration[:index])
+        @specs_dir = File.join(CLI.configuration[:root_dir],  CLI.configuration[:specs_dir])
+        @index_path = File.join(@specs_dir, CLI.configuration[:index])
         # Load index
         Dir.mkdir(@specs_dir) unless File.exists?(@specs_dir)
         File.open(@index_path, 'w') {|f| f.write(@@default_index.to_json)} unless File.exists?(@index_path)
