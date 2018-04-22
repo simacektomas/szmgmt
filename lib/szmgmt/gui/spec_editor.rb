@@ -1,555 +1,3 @@
-import javax.swing.GroupLayout
-import java.awt.event.KeyEvent
-import javax.swing.JButton
-import javax.swing.JComboBox
-import javax.swing.JFrame
-import javax.swing.JPanel
-import javax.swing.JMenuBar
-import javax.swing.JMenuItem
-import javax.swing.JTextField
-import javax.swing.JMenu
-import javax.swing.JLabel
-import java.lang.System
-import javax.swing.JFileChooser
-import javax.swing.JOptionPane;
-import javax.swing.BoxLayout
-import java.awt.GridBagLayout
-import java.awt.BorderLayout
-import javax.swing.Box
-import java.awt.Dimension
-import java.awt.GridLayout
-import javax.swing.BorderFactory
-import javax.swing.JScrollPane
-import javax.swing.JPasswordField
-
-module SZMGMT
-  module GUI
-    class UserProfile < JPanel
-      USER =  {
-          "login" => 'user',
-          "pasword" => '',
-          "shell" => "/bin/bash",
-          "type" => "normal",
-          "sudoers" => "ALL=(ALL) ALL",
-          "roles" => [
-              "root"
-          ],
-          "profiles" => [
-              "System Administrator"
-          ]
-      }
-
-      def initialize(user_hash = USER)
-        super()
-        self.setLayout GridLayout.new(7, 2)
-        title = BorderFactory.createTitledBorder("User");
-        self.setBorder title
-        self.add(JLabel.new 'Login:')
-        @login = JTextField.new user_hash['login']
-        self.add @login
-        self.add(JLabel.new 'Password:')
-        @password = JPasswordField.new
-        self.add @password
-        self.add(JLabel.new 'User shell:')
-        @shell = JTextField.new user_hash['shell']
-        self.add @shell
-        self.add(JLabel.new 'User type:')
-        @user_type = JComboBox.new
-        @user_type.addItem("Normal")
-        @user_type.addItem("Role")
-        if user_hash['type'] == 'role'
-          @user_type.setSelectedItem('Role')
-        end
-        self.add @user_type
-        self.add(JLabel.new 'Sudoers command:')
-        @sudoers = JTextField.new user_hash['sudoers']
-        self.add @sudoers
-
-        self.add(JLabel.new 'User roles:')
-        @roles = JTextField.new user_hash['roles'].join(', ')
-        self.add @roles
-
-        self.add(JLabel.new 'User profiles:')
-        @profiles = JTextField.new user_hash['profiles'].join(', ')
-        self.add @profiles
-        self.revalidate
-        self.repaint
-      end
-
-      def to_h
-        {
-            "type" => "user",
-            "values" => {
-                "login" => @login.getText,
-                "pasword" => @password.getPassword,
-                "shell" => @shell.getText,
-                "type" => @user_type.getSelectedItem.downcase,
-                "sudoers" => @sudoers.getText,
-                "roles" => @roles.getText.split(','),
-                "profiles" => @profiles.getText.split(',')
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class RootProfile < JPanel
-      ROOT = {
-          "password" => '',
-          "type" => 'role'
-      }
-      def initialize(root_hash = ROOT)
-        super()
-        self.setLayout GridLayout.new(2, 2)
-        title = BorderFactory.createTitledBorder("Root");
-        self.setBorder title
-        self.add(JLabel.new 'Password:')
-        @password = JPasswordField.new
-        self.add @password
-        self.add(JLabel.new 'Type')
-        @root_type = JComboBox.new
-        @root_type.addItem("Normal")
-        @root_type.addItem("Role")
-        if root_hash['type'] == 'role'
-          @root_type.setSelectedItem('Role')
-        end
-        self.add @root_type
-      end
-
-      def to_h
-        {
-            "type" => "root",
-            "values" => {
-                "password" => @password.getPassword,
-                "type" => @root_type.getSelectedItem.downcase
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class TimezoneProfile < JPanel
-      def initialize(timezone)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Timezone:')
-        @timezone = JTextField.new timezone
-        self.add @timezone
-      end
-
-      def to_h
-        {
-            "timezone" => @timezone.getText
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class LocaleProfile < JPanel
-      def initialize(locale)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Locale:')
-        @locale = JTextField.new locale
-        self.add @locale
-      end
-
-      def to_h
-        {
-            "locale" => @locale.getText
-        }
-      end
-    end
-  end
-end
-
-
-module SZMGMT
-  module GUI
-    class HostnameProfile < JPanel
-      def initialize(hostname)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Hostname:')
-        @hostname = JTextField.new hostname
-        self.add @hostname
-      end
-
-      def to_h
-        {
-            "hostname" => @hostname.getText
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class IPv4Interface < JPanel
-      INTERFACE = {
-          "name" => 'net0',
-          "address_type" => 'dhcp',
-          'static_address' => '',
-          "default_route" => ''
-      }
-
-      def initialize(interface = INTERFACE)
-        super()
-        self.setLayout GridLayout.new(4, 2)
-        title = BorderFactory.createTitledBorder("Interface");
-        self.setBorder title
-        self.add(JLabel.new 'Interface name:')
-        @name = JTextField.new interface["name"]
-        self.add @name
-        self.add(JLabel.new 'Address type:')
-        @adress_type = JComboBox.new
-        @adress_type.addItem("DHCP")
-        @adress_type.addItem("Static")
-        if interface["address_type"] == 'dhcp'
-          @adress_type.setSelectedItem("DHCP")
-        else
-          @adress_type.setSelectedItem("Static")
-        end
-        self.add @adress_type
-        self.add(JLabel.new 'Static address (IP):')
-        @static = JTextField.new interface["static_address"]
-        self.add @static
-        self.add(JLabel.new 'Default route (IP):')
-        @route = JTextField.new interface["default_route"]
-        self.add @route
-      end
-
-      def to_h
-        interface = {
-            'name' => "#{@name.getText}",
-            'address_type' => "#{@adress_type.getSelectedItem.downcase}"
-        }
-        interface['static_address'] = @static.getText unless @static.getText.empty?
-        interface['default_route'] = @route.getText unless @route.getText.empty?
-        interface
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class Package < JPanel
-      def initialize(package)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Package name:')
-        @package = JTextField.new package
-        self.add @package
-      end
-
-      def to_s
-        @package.getText
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class AutobootConfig < JPanel
-      def initialize(value = true)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Boot with global zone:')
-        @autoboot = JComboBox.new
-        @autoboot.addItem("Enable")
-        @autoboot.addItem("Disable")
-        if value
-          @autoboot.setSelectedItem("Enable")
-        else
-          @autoboot.setSelectedItem("Disable")
-        end
-        self.add @autoboot
-      end
-
-      def to_h
-        autoboot = @autoboot.getSelectedItem() == 'Enable' ? true : false
-        {
-            "ip-type" => autoboot
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class ZonepathConfig < JPanel
-      def initialize(zonepath = 'system/zones/%{zonename}')
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Zone image path:')
-        @zonepath = JTextField.new zonepath
-        self.add @zonepath
-      end
-
-      def to_h
-        {
-            "zonepath" => "#{@zonepath.getText}"
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class IPTypeConfig < JPanel
-      def initialize(type = 'exclusive')
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Ip adress type:')
-        @ip = JComboBox.new
-        @ip.addItem("Exclusive")
-        @ip.addItem("Shared")
-        if type == 'exclusive'
-          @ip.setSelectedItem("Exclusive")
-        else
-          @ip.setSelectedItem("Shared")
-        end
-        self.add @ip
-      end
-
-      def to_h
-        {
-            "ip-type" => "#{@ip.getSelectedItem().downcase}"
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class BrandConfig < JPanel
-      MAP = {
-          "Thin zone" => 'solaris',
-          "Kernell zone" => 'solaris-kz',
-          "Legacy" => 'solaris10'
-      }
-
-      def initialize(brand = 'solaris')
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        self.add(JLabel.new 'Zone type:')
-        @brand = JComboBox.new
-        @brand.addItem("Thin zone")
-        @brand.addItem("Kernell zone")
-        @brand.addItem("Legacy")
-        if brand == 'solaris'
-          @brand.setSelectedItem("Thin zone")
-        elsif brand == 'solaris-kz'
-          @brand.setSelectedItem('Kernell zone')
-        else
-          @brand.setSelectedItem("Legacy")
-        end
-        self.add @brand
-      end
-
-      def to_h
-        {
-            "brand" => "#{MAP[@brand.getSelectedItem()]}"
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class AnetResource < JPanel
-      DEFAULT_ANET = {
-          "linkname" => "net0",
-          "lower-link" => "auto",
-          "mac-address" => "auto"
-      }
-
-      def initialize(anet_hash = DEFAULT_ANET)
-        super()
-        self.setLayout GridLayout.new(3, 2)
-        title = BorderFactory.createTitledBorder("Anet");
-        self.setBorder title
-        self.add(JLabel.new 'Interface name')
-        @linkname = JTextField.new anet_hash['linkname']
-        self.add @linkname
-        self.add(JLabel.new 'Physical interface')
-        @lower_link = JTextField.new anet_hash['lower-link']
-        self.add @lower_link
-        self.add(JLabel.new 'MAC adress type')
-        @mac_address = JComboBox.new
-        @mac_address.addItem("Auto")
-        @mac_address.addItem("Factory")
-        @mac_address.addItem("Random")
-        @mac_address.addItem("Default")
-        self.add @mac_address
-      end
-
-      def to_h
-        {
-            "type" => "anet",
-            "values" => {
-                "linkname" => @linkname.getText(),
-                "lower-link" => @lower_link.getText(),
-                "mac-address" => @mac_address.getSelectedItem().downcase
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class CappedCPUResource < JPanel
-      CAPPED_CPU = {
-          "ncpus" => ''
-      }
-
-      def initialize(cpu_hash = CAPPED_CPU)
-        super()
-        self.setLayout GridLayout.new(1, 2)
-        title = BorderFactory.createTitledBorder("Capped-CPU");
-        self.setBorder title
-        self.add(JLabel.new 'Processor ratio:')
-        @ncpus = JTextField.new cpu_hash['ncpus']
-        self.add @ncpus
-      end
-
-      def to_h
-        {
-            "type" => "capped-cpu",
-            "values" => {
-                "ncpus" => @ncpus.getText()
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class CappedMemoryResource < JPanel
-      CAPPED_MEMORY = {
-          "physical" => '',
-          "locked" => '',
-          "swap" => ''
-      }
-
-      def initialize(memory_hash = CAPPED_MEMORY)
-        super()
-        self.setLayout GridLayout.new(3, 2)
-        title = BorderFactory.createTitledBorder("Capped-Memory");
-        self.setBorder title
-        self.add(JLabel.new 'Physical memory:')
-        @physical = JTextField.new memory_hash['physical']
-        self.add @physical
-        self.add(JLabel.new 'Locked memory:')
-        @locked = JTextField.new memory_hash['locked']
-        self.add @locked
-        self.add(JLabel.new 'Swap memory:')
-        @swap = JTextField.new memory_hash['swap']
-        self.add @swap
-      end
-
-      def to_h
-        {
-            "type" => "capped-memory",
-            "values" => {
-                "physical" => @physical.getText(),
-                "locked" => @locked.getText(),
-                "swap" => @swap.getText()
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class AdminResource < JPanel
-      ADMIN = {
-          "user" => "",
-          "auths" => ""
-      }
-
-      def initialize(admin_hash = ADMIN)
-        super()
-        self.setLayout GridLayout.new(2, 2)
-        title = BorderFactory.createTitledBorder("Admin");
-        self.setBorder title
-        self.add(JLabel.new 'Username:')
-        @user = JTextField.new admin_hash['user']
-        self.add @user
-        self.add(JLabel.new 'Authentication (login, manage, ..):')
-        @auths = JTextField.new admin_hash['auths']
-        self.add @auths
-      end
-
-      def to_h
-        {
-            "type" => "admin",
-            "values" => {
-                "user" => @user.getText(),
-                "auths" => @auths.getText()
-            }
-        }
-      end
-    end
-  end
-end
-
-module SZMGMT
-  module GUI
-    class DatasetResource < JPanel
-      DATASET = {
-          "name" => "",
-          "alias" => ""
-      }
-
-      def initialize(dataset_hash = DATASET)
-        super()
-        self.setLayout GridLayout.new(2, 2)
-        title = BorderFactory.createTitledBorder("Dataset");
-        self.setBorder title
-        self.add(JLabel.new 'Dataset name:')
-        @name = JTextField.new dataset_hash['name']
-        self.add @name
-        self.add(JLabel.new 'Dataset alias:')
-        @alias = JTextField.new dataset_hash['alias']
-        self.add @alias
-      end
-
-      def to_h
-        {
-            "type" => "dataset",
-            "values" => {
-                "name" => @name.getText(),
-                "alias" => @alias.getText()
-            }
-        }
-      end
-    end
-  end
-end
-
 module SZMGMT
   module GUI
     class SpecEditor < JFrame
@@ -613,11 +61,12 @@ module SZMGMT
           }
       }
 
-      def initialize
+      def initialize(szmgmt_api)
         super "Virtual machine specification editor"
         self.initialize_gui
         @loaded = false
         @loaded_vm_spec
+        @api = szmgmt_api
       end
 
       def initialize_gui
@@ -629,14 +78,27 @@ module SZMGMT
         item_new = JMenuItem.new 'New specification'
         item_new.addActionListener do |e|
           @loaded_vm_spec = DEFAULT_VM_SPEC
-          spec_name = JOptionPane.showInputDialog("Specification name: ");
-          @loaded_vm_spec['name'] = spec_name
           @loaded = true
           initialize_editor
         end
         item_open = JMenuItem.new 'Open specification'
         item_open.addActionListener do |e|
-          puts 'Open clicked.'
+
+          spec_chooser = JFileChooser.new
+          ret = spec_chooser.showOpenDialog self
+          if ret == JFileChooser::APPROVE_OPTION
+            selectedFile = spec_chooser.getSelectedFile();
+            path = selectedFile.getAbsolutePath();
+
+            @loaded_vm_spec = @api.load_vm_spec path
+            @loaded = true
+            initialize_editor
+          else
+            JOptionPane.showMessageDialog(self,
+                                          "You didn't choose a virtual machine specification file.",
+                                          "Warning",
+                                          JOptionPane::WARNING_MESSAGE)
+          end
         end
         item_exit = JMenuItem.new "Exit"
         item_exit.addActionListener do |e|
@@ -648,6 +110,12 @@ module SZMGMT
         file_menu.add item_exit
         @menu.add file_menu
         self.setJMenuBar @menu
+
+        @info = JPanel.new
+        @info.setLayout BoxLayout.new @info, BoxLayout::X_AXIS
+        @info.add JLabel.new("Welcome #{ENV['USER']} to virtual machine specification editor.")
+
+        @scene.add @info, BorderLayout::PAGE_START
 
         self.setDefaultCloseOperation JFrame::EXIT_ON_CLOSE
         self.setSize 250, 200
@@ -700,10 +168,11 @@ module SZMGMT
         @profile_interfaces.getComponents.each do |interface|
           @specification["profile"]["network"] << interface.to_h
         end
-        p @specification
+        { 'name' => @loaded_vm_spec['name'], 'type' => @loaded_vm_spec['type'] }.merge @specification
       end
 
       def initialize_main
+        @scene.removeAll()
         @main_panel = JPanel.new
         @main_panel.setLayout BoxLayout.new @main_panel, BoxLayout::X_AXIS
 
@@ -713,11 +182,49 @@ module SZMGMT
         @controll.setLayout GridLayout.new(1, 2)
         @validate_btn = JButton.new 'Validate specification'
         @validate_btn.addActionListener do |e|
-          get_specification
+          vm_spec = get_specification
+          begin
+            @api.validate_vm_spec('', false, vm_spec)
+            JOptionPane.showMessageDialog(self,
+                                          "Virtual machine specification is valid.",
+                                          "Info",
+                                          JOptionPane::INFORMATION_MESSAGE)
+          rescue SZMGMT::Exceptions::TemplateInvalidError => e
+            JOptionPane.showMessageDialog(self,
+                                          "Virtual machine specification is invalid.",
+                                          "Warning",
+                                          JOptionPane::WARNING_MESSAGE)
+          end
         end
         @save_btn = JButton.new 'Save specification'
         @save_btn.addActionListener do |e|
-          get_specification
+          vm_spec = get_specification
+          spec_name = JOptionPane.showInputDialog("Specification name: ");
+          return unless spec_name
+          vm_spec['name'] = spec_name
+
+          spec_chooser = JFileChooser.new
+          spec_chooser.setCurrentDirectory(java.io.File.new("~/"))
+          spec_chooser.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
+          ret = spec_chooser.showOpenDialog self
+          if ret == JFileChooser::APPROVE_OPTION
+            selectedFile = spec_chooser.getSelectedFile();
+            path = selectedFile.getAbsolutePath();
+            file_path = File.join(path, "#{spec_name}.json")
+            if File.exist?(file_path)
+              choice = JOptionPane.showConfirmDialog(self,
+                                                     "File #{file_path} exists.\nDo you want to overwrite it ?",
+                                                     "Warning",
+                                                     JOptionPane::YES_NO_OPTION,
+                                                     JOptionPane::QUESTION_MESSAGE)
+              return if choice == 1
+            end
+            File.open(file_path,"w") do |file|
+              file.write(JSON.pretty_generate(vm_spec))
+            end
+            @scene.removeAll()
+            self.pack
+          end
         end
         @controll.add @validate_btn
         @controll.add @save_btn
