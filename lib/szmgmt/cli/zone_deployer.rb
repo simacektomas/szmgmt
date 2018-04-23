@@ -58,6 +58,46 @@ module SZMGMT
           puts "      #{host_name}:"
           @zones_by_hosts[host_name].each_with_index do |zone_name, zone_index|
             puts "        #{zone_name}: #{result_all[host_index][zone_index] ? 'success': 'failed'}"
+            CLI.zone_tracker.track_zone "#{zone_name}:#{host_name}" if result_all[host_index][zone_index]
+          end
+        end
+      end
+
+      def deploy_from_template(template_name, options = {})
+        force = options[:force] || false
+        boot  = options[:boot] || false
+        routine_options = {
+            :force => force,
+            :boot => boot,
+            :halt => false
+        }
+        puts "Solaris zones deployment from template initialized."
+        puts "  ---------------------------------------------------------"
+        puts "  Options:"
+        puts "               Clone zones: #{clone ? "enable" : "disable"}"
+        puts "                Boot zones: #{boot ? "enable" : "disable"}"
+        puts "    Rewrite existing zones: #{force ? "enable" : "disable"}"
+        puts "                    Source: template <#{template_name}>"
+        puts "  ---------------------------------------------------------"
+        puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment from template #{template_name}."
+        result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
+          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
+            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
+            if host_name == 'localhost'
+              SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_zone(zone_name, template_name, routine_options)
+            else
+              SZMGMT::SZONES::SZONESDeploymentRoutines.rdeploy_zone_from_zone(zone_name, @host_specs[host_name], template_name, routine_options)
+            end
+          end
+        end
+        puts "  ---------------------------------------------------------"
+        puts "  Deployment finished."
+        puts "    Status:"
+        @zones_by_hosts.keys.each_with_index do |host_name, host_index|
+          puts "      #{host_name}:"
+          @zones_by_hosts[host_name].each_with_index do |zone_name, zone_index|
+            puts "        #{zone_name}: #{result_all[host_index][zone_index] ? 'success': 'failed'}"
+            CLI.zone_tracker.track_zone "#{zone_name}:#{host_name}" if result_all[host_index][zone_index]
           end
         end
       end
@@ -82,10 +122,23 @@ module SZMGMT
         puts "  Halting source zone #{source_zone_name}"
         halt_zone = SZMGMT::SZONES::SZONESBasicZoneCommands.halt_zone(source_zone_name)
         if source_host_spec[:host_name] == 'localhost'
-          halt_zone.exec
+          begin
+            halt_zone.exec
+          rescue SZMGMT::SZONES::Exceptions::SZONESError
+            STDERR.puts " Cannot halt zone. Exiting."
+            return
+          end
         else
           Net::SSH.start(source_host_spec[:host_name], source_host_spec[:user], source_host_spec.to_h) do |ssh|
-            halt_zone.exec_ssh(ssh)
+            begin
+              halt_zone.exec_ssh(ssh)
+            rescue SZMGMT::SZONES::Exceptions::NoSuchZoneError
+              STDERR.puts " Cannot halt zone. Zone does not exist. Exiting."
+              return
+            rescue SZMGMT::SZONES::Exceptions::SZONESError
+              STDERR.puts " Cannot halt zone. Exiting."
+              return
+            end
           end
         end
         booted = true unless halt_zone.stderr =~ /already halted/
@@ -134,6 +187,7 @@ module SZMGMT
           puts "      #{host_name}:"
           @zones_by_hosts[host_name].each_with_index do |zone_name, zone_index|
             puts "        #{zone_name}: #{result_all[host_index][zone_index] ? 'success': 'failed'}"
+            CLI.zone_tracker.track_zone "#{zone_name}:#{host_name}" if result_all[host_index][zone_index]
           end
         end
       end
@@ -174,6 +228,7 @@ module SZMGMT
           puts "      #{host_name}:"
           @zones_by_hosts[host_name].each_with_index do |zone_name, zone_index|
             puts "        #{zone_name}: #{result_all[host_index][zone_index] ? 'success': 'failed'}"
+            CLI.zone_tracker.track_zone "#{zone_name}:#{host_name}" if result_all[host_index][zone_index]
           end
         end
       end

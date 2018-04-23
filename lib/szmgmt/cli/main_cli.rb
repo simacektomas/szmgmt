@@ -123,6 +123,12 @@ module SZMGMT
 
           end
         elsif options[:template]
+          template_name = options[:template]
+          unless template_name =~ /^template/
+            template_name = "template_#{template_name}"
+          end
+          deployer.deploy_from_template(template_name, {:force => options[:force],
+                                                        :boot => options[:boot]} )
 
         elsif options[:zone]
           zone_name, hostname = options[:zone].split(':')
