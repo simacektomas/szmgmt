@@ -18,7 +18,7 @@ module SZMGMT
         # OPTIONS
         logger              = opts[:logger] || SZMGMT.logger
         archive_destination = opts[:archive_destination]
-        include_config      = opts[:include_config]
+        include_config      = opts[:include_config] || true
         temporary_dir       = opts[:temporary_dir] || '/var/tmp'
         current_time        = Time.now.to_i
         base_name           = "#{zone_name}_backup_#{current_time}"
@@ -96,7 +96,7 @@ module SZMGMT
         # OPTIONS
         logger              = opts[:logger] || SZMGMT.logger
         archive_destination = opts[:archive_destination]
-        include_config      = opts[:include_config]
+        include_config      = opts[:include_config] || true
         temporary_dir       = opts[:temporary_dir] || '/var/tmp'
         current_time        = Time.now.to_i
         base_name           = "#{zone_name}_backup_#{current_time}"
