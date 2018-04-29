@@ -12,6 +12,7 @@ module SZMGMT
       def self.initialize_cli
         # Initialize directory
         Dir.mkdir(CLI.configuration[:root_dir]) unless File.exists?(CLI.configuration[:root_dir])
+        Dir.mkdir(File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])) unless File.exists?(File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir]))
       end
 
       class_option :verbose,
@@ -39,7 +40,8 @@ module SZMGMT
 
       desc 'editor', 'Editor for virtual machine specification'
       def editor
-        SZMGMT::GUI::SpecEditor.new(@szmgmt_api)
+        editor = SZMGMT::GUI::SpecEditor.new(@szmgmt_api)
+        editor.setVisible true
       end
 
       desc 'list', 'List all zones on registered hosts.'
