@@ -31,9 +31,9 @@ module SZMGMT
           end
         end
 
-        desc 'untruck [IDENTIFICATOR,..]', 'Untrack command is used for remove zones into application.'
+        desc 'detrack [IDENTIFICATOR,..]', 'Detrack command is used for remove zones into application.'
 
-        def untrack(*zone_identifiers)
+        def detrack(*zone_identifiers)
           zone_identifiers.each do |zone_id|
             STDOUT.puts "Removing zone #{zone_id} from tracked zones."
             CLI.zone_tracker.untrack_zone zone_id

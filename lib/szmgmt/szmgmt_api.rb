@@ -28,8 +28,8 @@ module SZMGMT
       false
     end
 
-    def validate_vm_spec(path_to_spec, full_validation = false)
-      VMSpecs::VMSpecsManager.validate_vm_spec(path_to_spec, full_validation)
+    def validate_vm_spec(path_to_spec, full_validation = false, vm_spec = nil)
+      VMSpecs::VMSpecsManager.validate_vm_spec(path_to_spec, full_validation, vm_spec)
     end
 
     def load_vm_spec(path_to_spec)

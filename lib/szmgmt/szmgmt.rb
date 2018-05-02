@@ -26,5 +26,7 @@ module SZMGMT
 
   def self.logger
     @logger ||= Logger.new(STDOUT)
+    @logger.level = Logger::ERROR
+    @logger
   end
 end

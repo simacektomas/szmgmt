@@ -5,7 +5,8 @@ module SZMGMT
         :index => 'hosts.json',
         :specs_dir => 'hosts',
         :tracked_zones => 'tracked_zones.json',
-        :journal_dir => 'journal'
+        :journal_dir => 'journal',
+        :log_dir => 'log'
     }
 
     @valid_config_keys = @configuration.keys

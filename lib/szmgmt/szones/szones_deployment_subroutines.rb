@@ -141,10 +141,10 @@ module SZMGMT
         unzip = SZONESBasicCommands.unzip_archive(path_to_backup)
         ssh ? unzip.exec_ssh(ssh) : unzip.exec
         base_name = path_to_backup.split('/').last.split('.').first
-        path_to_zonecfg = "#{base_name}.zfs.gz"
-        cleaner.add_tmp_file(path_to_zonecfg, host_spec)
-        path_to_archive = "#{base_name}.zonecfg"
+        path_to_archive = "#{base_name}.zfs.gz"
         cleaner.add_tmp_file(path_to_archive, host_spec)
+        path_to_zonecfg= "#{base_name}.zonecfg"
+        cleaner.add_tmp_file(path_to_zonecfg, host_spec)
         logger.info("DEPLOY (#{opts[:id]}) -      Configuring zone #{zone_name} from command file...")
         logger.info("DEPLOY (#{opts[:id]}) -            zonecfg: #{path_to_zonecfg}...")
         configure = SZONESBasicZoneCommands.configure_zone_from_file(zone_name, path_to_zonecfg)
@@ -172,7 +172,7 @@ module SZMGMT
         logger.info("DEPLOY (#{opts[:id]}) -      Installing zone #{zone_name} from ZFS archive...")
         logger.info("DEPLOY (#{opts[:id]}) -            archive: #{path_to_archive}...")
         cleaner.add_persistent_zone_installation(zone_name, host_spec)
-        attach = SZONESBasicZoneCommands.attach_zone(zone_name, {:path_to_archive => path_to_archive} )
+        attach = SZONESBasicZoneCommands.install_zone(zone_name, {:path_to_archive => path_to_archive, :update => true} )
         ssh ? attach.exec_ssh(ssh) : attach.exec
         logger.info("DEPLOY (#{opts[:id]}) -      Installation of zone #{zone_name} finished.")
       end

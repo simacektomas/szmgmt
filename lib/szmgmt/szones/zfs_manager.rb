@@ -5,7 +5,7 @@ module SZMGMT
         check = SZONES::Command.new("/usr/sbin/zfs list #{zfs_dataset}")
         begin
           check.exec
-        rescue Exception
+        rescue SZONES::Exceptions::CommandFailureError
           return false
         end
         true
@@ -17,7 +17,7 @@ module SZMGMT
         executor.add_command(check)
         begin
           executor.remote_ssh_execute(host_spec)
-        rescue SZONES::Exceptions::CommandFailureError.new(check)
+        rescue SZONES::Exceptions::CommandFailureError
           return false
         end
         true
@@ -27,7 +27,7 @@ module SZMGMT
         create = SZONES::Command.new("/usr/sbin/zfs create #{zfs_dataset}")
         begin
           create.exec
-        rescue Exception
+        rescue SZONES::Exceptions::CommandFailureError
           return false
         end
         true
@@ -39,10 +39,32 @@ module SZMGMT
         executor.add_command(create)
         begin
           executor.remote_ssh_execute(host_spec)
-        rescue SZONES::Exceptions::CommandFailureError.new(create)
+        rescue SZONES::Exceptions::CommandFailureError
           return false
         end
         true
+      end
+
+      def self.dataset_mountpoint(zfs_dataset)
+        query = SZONES::Command.new("/usr/sbin/zfs list -H -o mountpoint #{zfs_dataset}")
+        begin
+          query.exec
+        rescue SZONES::Exceptions::CommandFailureError
+          return nil
+        end
+        query.stdout.chomp("\n")
+      end
+
+      def self.remote_dataset_mountpoint(zfs_dataset, host_spec)
+        executor = SZONES::CommandExecutor.new
+        query = SZONES::Command.new("/usr/sbin/zfs list -H -o mountpoint #{zfs_dataset}")
+        executor.add_command(query)
+        begin
+          executor.remote_ssh_execute(host_spec)
+        rescue SZONES::Exceptions::CommandFailureError
+          return nil
+        end
+        query.stdout.chomp("\n")
       end
     end
   end

@@ -41,8 +41,8 @@ module SZMGMT
         end
         puts "  ---------------------------------------------------------"
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment."
-        result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
-          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
+        result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
+          Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
             puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_vm_spec(zone_name, vm_spec, routine_options)
@@ -74,14 +74,13 @@ module SZMGMT
         puts "Solaris zones deployment from template initialized."
         puts "  ---------------------------------------------------------"
         puts "  Options:"
-        puts "               Clone zones: #{clone ? "enable" : "disable"}"
         puts "                Boot zones: #{boot ? "enable" : "disable"}"
         puts "    Rewrite existing zones: #{force ? "enable" : "disable"}"
         puts "                    Source: template <#{template_name}>"
         puts "  ---------------------------------------------------------"
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment from template #{template_name}."
-        result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
-          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
+        result_all = Parallel.each(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
+          Parallel.each(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
             puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_zone(zone_name, template_name, routine_options)
@@ -145,8 +144,8 @@ module SZMGMT
         puts "  Zone #{source_zone_name} #{booted ? 'halted' : 'already halted'}."
         puts "  ---------------------------------------------------------"
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment from zone #{source_zone_name}."
-        result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
-          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
+        result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
+          Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
             puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
             if source_host_spec[:host_name] == 'localhost'
               if host_name == 'localhost'
@@ -211,8 +210,8 @@ module SZMGMT
         puts "                    Source: profile <#{path_to_profile}>" if path_to_profile
         puts "  ---------------------------------------------------------"
         puts "Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment."
-        result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
-          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
+        result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
+          Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
             puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_files(zone_name, path_to_zonecfg, routine_options)

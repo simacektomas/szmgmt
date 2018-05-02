@@ -26,14 +26,15 @@ module SZMGMT
         path_to_manifest    = opts[:path_to_manifest]
         path_to_profile     = opts[:path_to_profile]
         force               = opts[:force] || false
+        logger              = opts[:logger] || SZMGMT.logger
         ##########
         # PREPARATION
         cleaner             = SZONESCleanuper.new
         id                  = SZONESUtils.transaction_id
         ##########
         # EXECUTION
-        SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on localhost has been initialize...")
-        SZMGMT.logger.info("DEPLOY (#{id}) -      type: FILES")
+        logger.info("DEPLOY (#{id}) - Deployment of zone #{zone_name} on localhost has been initialize...")
+        logger.info("DEPLOY (#{id}) -      type: FILES")
         begin
           SZONESBasicRoutines.remove_zone(zone_name) if force
           SZONESDeploymentSubroutines.deploy_zone_from_files(zone_name,
@@ -42,24 +43,24 @@ module SZMGMT
                                                                  :id => id,
                                                                  :path_to_profile => path_to_profile,
                                                                  :path_to_manifest => path_to_manifest,
-                                                                 :cleaner => cleaner
+                                                                 :cleaner => cleaner,
+                                                                 :logger => logger
                                                              })
-        rescue  Exceptions::SZONESError
-          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
+        rescue Exceptions::SZONESError
+          logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} failed.")
           cleaner.cleanup_on_failure!
-          status = false
+          false
         else
-          SZMGMT.logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} succeeded.")
+          logger.info("DEPLOY (#{id}) - Deployment of template #{zone_name} succeeded.")
           if boot
-            SZMGMT.logger.info("DEPLOY (#{id}) - Booting up zone #{zone_name}")
+            logger.info("DEPLOY (#{id}) - Booting up zone #{zone_name}")
             SZONESBasicZoneCommands.boot_zone(zone_name).exec
-            SZMGMT.logger.info("DEPLOY (#{id}) - Zone #{zone_name} booted.")
+            logger.info("DEPLOY (#{id}) - Zone #{zone_name} booted.")
           end
-          status = true
+          true
         ensure
           cleaner.cleanup_temporary!
         end
-        status
       end
       # Routine for deploying TEMPLATE from configuration files. Frist file
       # is zone command file that can be exported from zonecfg command.
@@ -570,6 +571,7 @@ module SZMGMT
         force               = opts[:force] || false
         boot                = opts[:boot] || false
         halt                = opts[:halt] || false
+        ssh                 = opts[:ssh] ||
         if opts[:zonepath]
           zonepath = File.join( opts[:zonepath], zone_name )
         end

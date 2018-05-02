@@ -21,7 +21,7 @@ module SZMGMT
         end
 
         def self.usage
-          "#{command_name} [#{subcommand_names.join('|')}]"
+          "#{command_name} SUBCOMMAND"
         end
 
         def self.description

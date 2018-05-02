@@ -15,12 +15,6 @@ module SZMGMT
         Dir.mkdir(File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])) unless File.exists?(File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir]))
       end
 
-      class_option :verbose,
-                   aliases: ['-v'],
-                   desc: 'Makes command to print more detailed informations',
-                   type: :boolean,
-                   default: false
-
       class_option :force,
                    aliases: ['-f'],
                    desc: 'Determine if the installation, migration process should rewrite existing zones.',
@@ -270,6 +264,48 @@ module SZMGMT
         else
           backuper.backup_using_uar(options[:path], archive_destination)
         end
+      end
+
+      method_option :boot,
+                    aliases: ['-b'],
+                    type: :boolean,
+                    default: false,
+                    desc: 'Determine if the created zone should be booted.'
+
+      method_option :profile,
+                    aliases: ['-p'],
+                    type: :string,
+                    desc: 'Path profile file that contains configuration for system. See sysconfig(1).'
+
+      method_option :archives,
+                    aliases: ['-a'],
+                    type: :array,
+                    required: true,
+                    desc: 'Array of paths to archive. Index must corespond with zone identifier.'
+
+      desc 'recovery [ZONE_ID, ...] -a [BACKUP]', 'Recover all specified zone from backups.'
+
+      def recovery(*zone_identifiers)
+        return if zone_identifiers.empty?
+        if zone_identifiers.size != options[:archives].size
+          STDERR.puts "Error: Number of zones and number of archives missmatch."
+        end
+        recoverer = ZoneRecoverer.new
+        zone_identifiers.each_with_index do |zone_id, index|
+          zone_name, hostname = zone_id.split(':')
+          if hostname
+            host_spec = @host_manager.load_host_spec(hostname)
+            # Create default spec for this host
+            unless host_spec
+              SZMGMT.logger.warn("Using default host_spec values for host #{hostname}")
+              host_spec = SZMGMT::Entities::HostSpec.new(hostname).to_h
+            end
+            recoverer.add_zone(zone_name, options[:archives][index], host_spec)
+          else
+            recoverer.add_zone(zone_name, options[:archives][index])
+          end
+        end
+        recoverer.recover_zones({:force => options[:force], :boot => options[:boot]})
       end
 
       private

@@ -22,9 +22,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency "parallel"
   spec.add_dependency "thor"
   spec.add_dependency "json-schema"
-  spec.add_dependency "net-ssh"
+  spec.add_dependency "net-ssh", "5.0.0.beta1"
+  spec.add_dependency "unix-crypt"
 
   spec.add_development_dependency "bundler", "~> 1.16"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rspec", "~> 3.0"
 end

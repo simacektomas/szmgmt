@@ -45,7 +45,7 @@ module SZMGMT
             end
           end
         end
-        ssh.loop
+        ssh.loop { ssh.busy? }
         @error_handlers.each do |handler|
           handler.call(@command ,@stdout, @stderr, @exit_code)
         end

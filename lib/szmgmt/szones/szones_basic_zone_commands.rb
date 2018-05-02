@@ -76,7 +76,8 @@ module SZMGMT
         manifest = opts[:path_to_manifest] ?  "-m #{opts[:path_to_manifest]}" : ''
         profile = opts[:path_to_profile] ? "-c #{opts[:path_to_profile]}" : ''
         archive = opts[:path_to_archive] ? "-a #{opts[:path_to_archive]}" : ''
-        Command.new("/usr/sbin/zoneadm -z #{zone_name} install #{manifest} #{profile} #{archive}",
+        update = opts[:update] ? '-p' : ''
+        Command.new("/usr/sbin/zoneadm -z #{zone_name} install #{update} #{manifest} #{profile} #{archive}",
                     SZONESErrorHandlers.zoneadm_error_handler,
                     SZONESErrorHandlers.basic_error_handler)
 

@@ -185,7 +185,7 @@ module SZMGMT
         @configuration_wrapper.setLayout GridLayout.new(2,1)
 
         @configuration_global = JPanel.new
-        @configuration_global.setLayout BoxLayout.new(@configuration_global, BoxLayout::Y_AXIS)
+        @configuration_global.setLayout GridLayout.new(4,1)
 
         @configuration_resources = JPanel.new
         @configuration_resources.setLayout BoxLayout.new(@configuration_resources, BoxLayout::Y_AXIS)

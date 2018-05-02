@@ -10,5 +10,6 @@ require 'szmgmt/cli/zone_backuper'
 require 'szmgmt/cli/zone_deployer'
 require 'szmgmt/cli/zone_manager'
 require 'szmgmt/cli/zone_migrator'
+require 'szmgmt/cli/zone_recoverer'
 require 'szmgmt/cli/template_deployer'
 

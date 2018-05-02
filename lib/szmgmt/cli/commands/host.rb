@@ -20,7 +20,7 @@ module SZMGMT
         end
 
         def self.usage
-          "#{command_name} [#{subcommand_names.join('|')}]"
+          "#{command_name} SUBCOMMAND"
         end
 
         def self.description
@@ -51,7 +51,7 @@ module SZMGMT
           @host_manager.remove_host(hostname)
         end
 
-        desc 'delete hostname', 'Delete this host from registered hosts.'
+        desc 'list', 'List all hosts registered in application.'
         def list
           puts 'Hosts:'
           @host_manager.load_all_hosts.each do |host|
