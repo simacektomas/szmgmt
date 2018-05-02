@@ -2,7 +2,7 @@ module SZMGMT
   # Default configuration values
   @configuration = {
       :app_name => 'szmgmt',
-      :root_dir => '/export/home/zadmin/repositories/szmgmt/etc',
+      :root_dir => '~/.szmgmt/etc',
       :log_dir => '/var/log/szmgmt',
       :vm_modules => [ 'szones' ]
   }
