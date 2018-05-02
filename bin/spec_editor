@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'szmgmt'
+puts 'Starting GUI'
+gui = SZMGMT::GUI::SpecEditor.new(SZMGMT::SZMGMTAPI.new)
+gui.setVisible true
+
+puts 'GUI started'
