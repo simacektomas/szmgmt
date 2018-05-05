@@ -92,7 +92,7 @@ module SZMGMT
         end
       end
 
-      def migrate_uar
+      def migrate_uar(options = {})
         force = options[:force] || false
         boot  = options[:boot] || false
         routine_options = {
@@ -108,16 +108,18 @@ module SZMGMT
         puts "  ---------------------------------------------------------"
         puts "  Connecting concurrently to hosts '#{@zones_by_hosts.keys.join(' ')}' to perform migration (UAR)."
         result_all = Parallel.map(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
-          Parallel.map(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone|
+          local_result = []
+          @zones_by_hosts[host_name].each do |zone|
             log_name = "#{zone}_migration_#{rand(36**6).to_s(36)}.log"
             routine_options[:logger] = Logger.new(File.join(log_dir, log_name))
             puts "  Processing migration of zone '#{zone}:#{host_name}' to host #{@dest_host_spec[:host_name]}. See log '#{File.join(log_dir, log_name)}'."
             if host_name == 'localhost'
-              SZMGMT::SZONES::SZONESMigrationRoutines.migrate_local_zone_uar(zone, @dest_host_spec)
+              local_result << SZMGMT::SZONES::SZONESMigrationRoutines.migrate_local_zone_uar(zone, @dest_host_spec)
             else
-              SZMGMT::SZONES::SZONESMigrationRoutines.migrate_remote_zone_uar(zone, @host_specs[host_name], @dest_host_spec)
+              local_result << SZMGMT::SZONES::SZONESMigrationRoutines.migrate_remote_zone_uar(zone, @host_specs[host_name], @dest_host_spec)
             end
           end
+          local_result
         end
         puts "  ---------------------------------------------------------"
         puts "  Migration finished."
