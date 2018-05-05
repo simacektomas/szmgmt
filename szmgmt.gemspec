@@ -14,14 +14,17 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/simactom/master-thesis"
   spec.license       = "MIT"
 
+  spec.files         = `git ls-files`.split($/)
+  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
   spec.required_ruby_version = '>= 2.0.0'
 
-  spec.add_dependency "table_print"
-  spec.add_dependency "parallel"
-  spec.add_dependency "thor"
-  spec.add_dependency "json-schema"
+  spec.add_dependency "table_print", "~>0"
+  spec.add_dependency "parallel", "~>0"
+  spec.add_dependency "thor", "~>0"
+  spec.add_dependency "json-schema", "~>0"
   spec.add_dependency "net-ssh", "5.0.0.beta1"
   spec.add_dependency "unix-crypt"
 
