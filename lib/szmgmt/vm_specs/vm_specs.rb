@@ -2,7 +2,7 @@ module SZMGMT
   module VMSpecs
     @configuration = {
         :basic_schema => 'basic_template_schema.json',
-        :basic_schema_path => File.join('/etc/szmgmt', 'basic_template_schema.json' )
+        :basic_schema_path => 'basic_template_schema.json'
     }
 
     @valid_config_keys = @configuration.keys

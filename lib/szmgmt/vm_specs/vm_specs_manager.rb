@@ -1,7 +1,6 @@
 module SZMGMT
   module VMSpecs
     class VMSpecsManager
-
       def self.validate_vm_spec(path_to_spec, full_validation = false, vm_spec = nil)
         vm_spec ||= JSONLoader.load_json(path_to_spec)
         if full_validation
@@ -17,8 +16,6 @@ module SZMGMT
           advanecd_manager.send("validate_#{module_name.downcase}_vm_spec", path_to_spec, full_validation, vm_spec)
         rescue NoMethodError
           raise Exceptions::ModuleInvalidInterfaceError.new(module_name, 'validate_vm_spec')
-       #rescue NameError
-       #   raise Exceptions::ModuleNotFoundedError.new(module_name)
         end
         true
       end

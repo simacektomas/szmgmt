@@ -1,8 +1,11 @@
 module SZMGMT
+  def self.root
+    (File.dirname __dir__).split('/')[0...-1].join('/')
+  end
   # Default configuration values
   @configuration = {
       :app_name => 'szmgmt',
-      :root_dir => '~/.szmgmt/etc',
+      :root_dir => File.join(root, '/etc'),
       :log_dir => '/var/log/szmgmt',
       :vm_modules => [ 'szones' ]
   }
@@ -26,7 +29,7 @@ module SZMGMT
 
   def self.logger
     @logger ||= Logger.new(STDOUT)
-    @logger.level = Logger::ERROR
+    @logger.level = Logger::FATAL
     @logger
   end
 end
