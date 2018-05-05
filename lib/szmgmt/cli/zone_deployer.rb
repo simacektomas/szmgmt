@@ -20,6 +20,7 @@ module SZMGMT
             :force => force,
             :boot => boot
         }
+        log_dir = File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])
         puts "Solaris zones deployment from virtual machine specification initialized."
         puts "  ---------------------------------------------------------"
         puts "  Options:"
@@ -43,7 +44,9 @@ module SZMGMT
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment."
         result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
           Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
-            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
+            log_name = "#{zone}_migration_#{rand(36**6).to_s(36)}.log"
+            routine_options[:logger] = Logger.new(File.join(log_dir, log_name))
+            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log '#{File.join(log_dir, log_name)}'."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_vm_spec(zone_name, vm_spec, routine_options)
             else
@@ -71,6 +74,7 @@ module SZMGMT
             :boot => boot,
             :halt => false
         }
+        log_dir = File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])
         puts "Solaris zones deployment from template initialized."
         puts "  ---------------------------------------------------------"
         puts "  Options:"
@@ -81,7 +85,9 @@ module SZMGMT
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment from template #{template_name}."
         result_all = Parallel.each(@zones_by_hosts.keys, in_threads: @zones_by_hosts.keys.size) do |host_name|
           Parallel.each(@zones_by_hosts[host_name], in_threads: @zones_by_hosts[host_name].size) do |zone_name|
-            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
+            log_name = "#{zone}_migration_#{rand(36**6).to_s(36)}.log"
+            routine_options[:logger] = Logger.new(File.join(log_dir, log_name))
+            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log '#{File.join(log_dir, log_name)}'."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_zone(zone_name, template_name, routine_options)
             else
@@ -110,6 +116,7 @@ module SZMGMT
             :boot => boot,
             :halt => false
         }
+        log_dir = File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])
         puts "Solaris zones deployment from existing zone initialized."
         puts "  ---------------------------------------------------------"
         puts "  Options:"
@@ -146,7 +153,9 @@ module SZMGMT
         puts "  Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment from zone #{source_zone_name}."
         result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
           Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
-            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
+            log_name = "#{zone}_migration_#{rand(36**6).to_s(36)}.log"
+            routine_options[:logger] = Logger.new(File.join(log_dir, log_name))
+            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log '#{File.join(log_dir, log_name)}'."
             if source_host_spec[:host_name] == 'localhost'
               if host_name == 'localhost'
                 # Source is local host as well as destination
@@ -200,6 +209,7 @@ module SZMGMT
         }
         routine_options[:path_to_manifest] = path_to_manifest if path_to_manifest
         routine_options[:path_to_profile] = path_to_profile if path_to_manifest
+        log_dir = File.join(CLI.configuration[:root_dir], CLI.configuration[:log_dir])
         puts "Solaris zones deployment from source files initialized."
         puts "  ---------------------------------------------------------"
         puts "  Options:"
@@ -212,7 +222,9 @@ module SZMGMT
         puts "Connecting concurrently to hosts '#{@host_specs.keys.join(', ')}' to perform deployment."
         result_all = Parallel.map(@zones_by_hosts.keys, in_processes: @zones_by_hosts.keys.size) do |host_name|
           Parallel.map(@zones_by_hosts[host_name], in_processes: @zones_by_hosts[host_name].size) do |zone_name|
-            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log ''."
+            log_name = "#{zone}_migration_#{rand(36**6).to_s(36)}.log"
+            routine_options[:logger] = Logger.new(File.join(log_dir, log_name))
+            puts "  Processing zone '#{zone_name}' deployment on host '#{host_name}'. See log '#{File.join(log_dir, log_name)}'."
             if host_name == 'localhost'
               SZMGMT::SZONES::SZONESDeploymentRoutines.deploy_zone_from_files(zone_name, path_to_zonecfg, routine_options)
             else
