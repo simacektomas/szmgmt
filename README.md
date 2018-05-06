@@ -1,43 +1,46 @@
-# Szmgmt
+# SZMGMT
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/szmgmt`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
-
+The SZMGMT gem serves as tool for automatic management of Solaris Zones virtualization technology. It provide user interface by the means of executable `bin/szmgmt-cli` and `szmgmt-editor`.
+These two command can be used to invoke automatic administrating routines for this virtualization technology. Using this tool you can create, backup, recover, manage or migrate zones
+on local or remote servers.
+ 
 ## Installation
 
-Add this line to your application's Gemfile:
+As this is the Ruby gem the installation process is very simple. This gem have not been uploaded to Ruby gems yet. So firstly you have to clone this repository:
 
-```ruby
-gem 'szmgmt'
-```
+    $ git clone https://github.com/simactom/szmgmt szmgmt
 
-And then execute:
+Than you have to build the gem using:
+    
+    $ gem build szmgmt.gemspec
+    
+And finally install the gem from the package:
 
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install szmgmt
+    $ gem install szmgmt-1.0.0
 
 ## Usage
 
-TODO: Write usage instructions here
+This tool provides CLI to users that can use following commands:
 
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+    $Commands:
+       szmgmt_cli backup [ZONE_ID, ...]
+       szmgmt_cli deploy [ZONE_ID, ...]
+       szmgmt_cli editor
+       szmgmt_cli help [COMMAND]
+       szmgmt_cli host SUBCOMMAND
+       szmgmt_cli journal [SUBCOMMAND]
+       szmgmt_cli list
+       szmgmt_cli manage SUBCOMMAND
+       szmgmt_cli migrate [ZONE_ID, ...]
+       szmgmt_cli recovery [ZONE_ID, ...] -a [BACKUP]
+       szmgmt_cli template [SUBCOMMAND]
+     Options:
+       -f, [--force]
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/szmgmt. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/simactom/szmgmt.
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Szmgmt project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/szmgmt/blob/master/CODE_OF_CONDUCT.md).
